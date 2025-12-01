@@ -23,7 +23,9 @@ class WeatherService {
   Future<WeatherBundle?> fetchWeather(double lat, double lon) async {
     final url = Uri.parse(
       '$_base?latitude=$lat&longitude=$lon&current_weather=true'
-      '&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min&timezone=auto'
+      '&hourly=temperature_2m,weathercode,precipitation_probability'
+      '&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max'
+      '&timezone=auto'
       '&temperature_unit=fahrenheit',
     );
     final response = await http.get(url);

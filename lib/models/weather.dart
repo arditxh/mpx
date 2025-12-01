@@ -2,8 +2,9 @@ class Weather {
   final double temperature;
   final String condition;
   final int code;
+  final DateTime? time;
 
-  Weather({required this.temperature, required this.condition, required this.code});
+  Weather({required this.temperature, required this.condition, required this.code, this.time});
 
   factory Weather.fromJson(Map<String, dynamic> json) {
     final code = (json['weathercode'] ?? json['weather_code'] ?? 0) as int;
@@ -11,7 +12,17 @@ class Weather {
       temperature: (json['temperature'] ?? 0).toDouble(),
       condition: _describe(code),
       code: code,
+      time: _parseTime(json['time'] as String?),
     );
+  }
+
+  static DateTime? _parseTime(String? raw) {
+    if (raw == null) return null;
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return null;
+    }
   }
 
   static String _describe(int code) {
