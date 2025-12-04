@@ -14,9 +14,20 @@ class CityWeather {
   final WeatherBundle bundle;
 }
 
+// class WeatherViewModel extends ChangeNotifier {
+//   final WeatherService _service = WeatherService();
+//   final GeocodingService _geocoding = GeocodingService();
 class WeatherViewModel extends ChangeNotifier {
-  final WeatherService _service = WeatherService();
-  final GeocodingService _geocoding = GeocodingService();
+  // Allow injecting WeatherService for testing; defaults to real service
+  final WeatherService _service;
+  final GeocodingService _geocoding;
+
+  WeatherViewModel({
+    WeatherService? service,
+    GeocodingService? geocoding,
+  })  : _service = service ?? WeatherService(),
+        _geocoding = geocoding ?? GeocodingService();
+
 
   final List<CityWeather> _cities = [];
   bool _loading = false;
