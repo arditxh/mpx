@@ -338,38 +338,124 @@ class _HomeScreenState extends State<HomeScreen> {
     return bestIndex;
   }
 
-  Future<void> _showAddCityDialog() async {
-    final vm = Provider.of<WeatherViewModel>(context, listen: false);
-    _cityController.clear();
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add City'),
-          content: TextField(
-            controller: _cityController,
-            decoration: const InputDecoration(hintText: 'Enter city name'),
+Future<void> _showAddCityDialog() async {
+  final vm = Provider.of<WeatherViewModel>(context, listen: false);
+  _cityController.clear();
+
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      final animatedListKey = GlobalKey<AnimatedListState>();
+
+      return AlertDialog(
+        title: const Text('Add / Remove City'),
+        content: StatefulBuilder(
+          builder: (context, setStateSB) {
+            return SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _cityController,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter city name',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Current Cities:',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  SizedBox(
+                    height: 200,
+                    child: AnimatedList(
+                      key: animatedListKey,
+                      initialItemCount: vm.cities.length,
+                      itemBuilder: (context, index, animation) {
+                        final city = vm.cities[index];
+
+                        final curved = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeInOut,
+                        );
+
+                        return FadeTransition(
+                          opacity: curved,
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(city.city.name),
+                            trailing: const Icon(Icons.delete_outline),
+                            onTap: () {
+                              final removedCity = vm.cities[index];
+
+                              vm.removeCity(index);
+
+                              animatedListKey.currentState!.removeItem(
+                                index,
+                                (context, animation) {
+                                  final curved = CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeInOut,
+                                  );
+
+                                  return FadeTransition(
+                                    opacity: curved,
+                                    child: ListTile(
+                                      title: Text(
+                                        removedCity.city.name,
+                                        style: const TextStyle(
+                                          color: Color.fromARGB(255, 0, 0, 0),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                duration: const Duration(milliseconds: 350),
+                              );
+
+                              setStateSB(() {});
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final name = _cityController.text.trim();
-                if (name.isNotEmpty) {
-                  await vm.addCityByName(name);
-                }
-                if (context.mounted) Navigator.of(context).pop();
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+          ElevatedButton(
+            onPressed: () async {
+              final name = _cityController.text.trim();
+              if (name.isNotEmpty) {
+                await vm.addCityByName(name);
+              }
+              if (context.mounted) Navigator.of(context).pop();
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+
+
 }
 
 class _CurrentConditionsCard extends StatelessWidget {
