@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/weather.dart';
+import '../viewmodels/settings_viewmodel.dart';
 import '../viewmodels/weather_viewmodel.dart';
+import 'settings_screen.dart';
 
 String _iconAssetForCode(int code, {required bool isNight}) {
   // Map Open-Meteo weather codes to local assets.
@@ -38,6 +40,9 @@ bool _isPrecipitation(int code) {
 }
 
 int _roundToNearestFive(int value) => (value / 5).round() * 5;
+double _displayTemp(double tempF, bool useCelsius) =>
+    useCelsius ? (tempF - 32) * 5 / 9 : tempF;
+String _unitLabel(bool useCelsius) => useCelsius ? '°C' : '°F';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -68,10 +73,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsViewModel>().settings;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Weather'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
           Consumer<WeatherViewModel>(
             builder: (context, vm, _) {
               return IconButton(
@@ -105,6 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   : null,
             );
           }
+
+          final useCelsius = settings.useCelsius;
+          final compactLayout = settings.compactLayout;
+          final cardSpacing = compactLayout ? 16.0 : 24.0;
+          final listPadding = EdgeInsets.all(compactLayout ? 12 : 16);
 
           final targetIndex = vm.selectedIndex.clamp(0, vm.cities.length - 1);
           // Only jump pages when the list of cities changes (e.g., add/remove).
@@ -169,21 +188,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     return RefreshIndicator(
                       onRefresh: () => vm.refreshCity(index),
                       child: ListView(
-                        padding: const EdgeInsets.all(16),
+                        padding: listPadding,
                         children: [
                           _CurrentConditionsCard(
                             weather: cityWeather.bundle.current,
                             cityName: cityWeather.city.name,
                             isNight: _isNight(cityWeather.bundle.current.time),
+                            useCelsius: useCelsius,
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: cardSpacing),
                           Text(
                             'Hourly',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: compactLayout ? 8 : 12),
                           SizedBox(
-                            height: 150,
+                            height: compactLayout ? 130 : 150,
                             child: Builder(
                               builder: (context) {
                                 final hourlyTimes =
@@ -217,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   scrollDirection: Axis.horizontal,
                                   itemCount: displayCount,
                                   separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 12),
+                                      SizedBox(width: compactLayout ? 8 : 12),
                                   itemBuilder: (context, hourIndex) {
                                     final actualIndex = start + hourIndex;
                                     final time = hourlyTimes[actualIndex];
@@ -242,16 +262,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     final label = hourIndex == 0
                                         ? 'Now'
                                         : _formatHour(time);
+                                    final rawTemp = hourIndex == 0
+                                        ? cityWeather.bundle.current.temperature
+                                        : hourlyTemps[actualIndex];
+                                    final displayTemp =
+                                        _displayTemp(rawTemp, useCelsius);
                                     return _HourlyTile(
                                       label: label,
-                                      temperature: hourIndex == 0
-                                          ? cityWeather
-                                                .bundle
-                                                .current
-                                                .temperature
-                                          : hourlyTemps[actualIndex],
+                                      temperature: displayTemp,
                                       code: code,
                                       precipChance: showPrecip ? precip : null,
+                                      unitLabel: _unitLabel(useCelsius),
                                       isNight: _isNight(time),
                                     );
                                   },
@@ -259,12 +280,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: cardSpacing),
                           Text(
                             'Daily',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: compactLayout ? 8 : 12),
                           ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
@@ -276,9 +297,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 label: _formatDay(
                                   cityWeather.bundle.daily.times[dayIndex],
                                 ),
-                                high:
-                                    cityWeather.bundle.daily.tempMax[dayIndex],
-                                low: cityWeather.bundle.daily.tempMin[dayIndex],
+                                high: _displayTemp(
+                                  cityWeather.bundle.daily.tempMax[dayIndex],
+                                  useCelsius,
+                                ),
+                                low: _displayTemp(
+                                  cityWeather.bundle.daily.tempMin[dayIndex],
+                                  useCelsius,
+                                ),
                                 code: cityWeather.bundle.daily.codes[dayIndex],
                                 precipChance: () {
                                   final raw =
@@ -291,23 +317,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ? cityWeather
                                             .bundle
                                             .daily
-                                            .precipitationProbabilityMax[dayIndex]
+                                              .precipitationProbabilityMax[dayIndex]
                                       : 0;
                                   final rounded = _roundToNearestFive(raw);
-                                  return _isPrecipitation(
-                                            cityWeather
-                                                .bundle
-                                                .daily
-                                                .codes[dayIndex],
-                                          ) &&
-                                          rounded > 0
-                                      ? rounded
-                                      : null;
+                                  final hasPrecip = _isPrecipitation(
+                                        cityWeather
+                                            .bundle
+                                            .daily
+                                            .codes[dayIndex],
+                                      ) &&
+                                      rounded > 0;
+                                  return hasPrecip ? rounded : null;
                                 }(),
                                 isNight: _isNightForDay(
                                   cityWeather.bundle.daily.times[dayIndex],
                                   cityWeather.bundle.current.time,
                                 ),
+                                compact: compactLayout,
+                                unitLabel: _unitLabel(useCelsius),
                               );
                             },
                           ),
@@ -589,15 +616,19 @@ class _CurrentConditionsCard extends StatelessWidget {
     required this.weather,
     required this.cityName,
     required this.isNight,
+    required this.useCelsius,
   });
 
   final Weather weather;
   final String cityName;
   final bool isNight;
+  final bool useCelsius;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final displayTemp = _displayTemp(weather.temperature, useCelsius);
+    final unitLabel = _unitLabel(useCelsius);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -617,7 +648,7 @@ class _CurrentConditionsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      weather.temperature.toStringAsFixed(1),
+                      displayTemp.toStringAsFixed(1),
                       style: theme.textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -625,7 +656,7 @@ class _CurrentConditionsCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text('°F', style: theme.textTheme.titleLarge),
+                      child: Text(unitLabel, style: theme.textTheme.titleLarge),
                     ),
                   ],
                 ),
@@ -646,6 +677,7 @@ class _HourlyTile extends StatelessWidget {
     required this.label,
     required this.temperature,
     required this.code,
+    required this.unitLabel,
     this.precipChance,
     this.isNight = false,
   });
@@ -653,6 +685,7 @@ class _HourlyTile extends StatelessWidget {
   final String label;
   final double temperature;
   final int code;
+  final String unitLabel;
   final int? precipChance;
   final bool isNight;
 
@@ -678,7 +711,7 @@ class _HourlyTile extends StatelessWidget {
             const SizedBox(height: 4),
           ],
           Text(
-            '${temperature.toStringAsFixed(0)}°',
+            '${temperature.toStringAsFixed(0)}$unitLabel',
             style: theme.textTheme.titleLarge,
           ),
         ],
@@ -695,6 +728,8 @@ class _DailyTile extends StatelessWidget {
     required this.code,
     this.precipChance,
     this.isNight = false,
+    required this.compact,
+    required this.unitLabel,
   });
 
   final String label;
@@ -703,12 +738,14 @@ class _DailyTile extends StatelessWidget {
   final int code;
   final int? precipChance;
   final bool isNight;
+  final bool compact;
+  final String unitLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.symmetric(vertical: compact ? 6 : 10),
       child: Row(
         children: [
           SizedBox(
@@ -721,10 +758,13 @@ class _DailyTile extends StatelessWidget {
             Text('$precipChance%', style: theme.textTheme.bodySmall),
           ],
           const Spacer(),
-          Text('${low.toStringAsFixed(0)}°', style: theme.textTheme.bodyMedium),
+          Text(
+            '${low.toStringAsFixed(0)}$unitLabel',
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(width: 12),
           Text(
-            '${high.toStringAsFixed(0)}°',
+            '${high.toStringAsFixed(0)}$unitLabel',
             style: theme.textTheme.titleMedium,
           ),
         ],

@@ -2,8 +2,10 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:mpx/models/dailyModel.dart';
 import 'package:mpx/models/hourlyModel.dart';
+import 'package:mpx/models/settings.dart';
 import 'package:mpx/models/weather.dart';
 import 'package:mpx/models/weather_failure.dart';
+import 'package:mpx/repositories/settings_repository.dart';
 import 'package:mpx/repositories/weather_repository.dart';
 import 'package:mpx/services/location_service.dart';
 import 'package:mpx/services/weather_service.dart';
@@ -60,6 +62,21 @@ class FakeLocationService extends LocationService {
 
   @override
   Future<bool> openLocationSettings() async => true;
+}
+
+class FakeSettingsRepository implements SettingsRepository {
+  FakeSettingsRepository({Settings initial = const Settings()})
+      : _settings = initial;
+
+  Settings _settings;
+
+  @override
+  Future<Settings> load() async => _settings;
+
+  @override
+  Future<void> save(Settings settings) async {
+    _settings = settings;
+  }
 }
 
 Position buildFakePosition({

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpx/views/home_screen.dart';
+import 'package:mpx/viewmodels/settings_viewmodel.dart';
 import 'package:mpx/viewmodels/weather_viewmodel.dart';
 import 'package:mpx/models/city.dart';
 import 'package:mpx/services/location_service.dart';
@@ -26,8 +27,15 @@ void main() {
     );
 
     await tester.pumpWidget(
-      ChangeNotifierProvider.value(
-        value: vm,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => SettingsViewModel(
+              repository: FakeSettingsRepository(),
+            ),
+          ),
+          ChangeNotifierProvider.value(value: vm),
+        ],
         child: const MaterialApp(home: HomeScreen()),
       ),
     );
