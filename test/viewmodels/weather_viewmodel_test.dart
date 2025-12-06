@@ -46,7 +46,6 @@ void main() {
 
   test('selectCity updates the selected index', () {
     final vm = WeatherViewModel(service: FakeWeatherService());
-
     vm.selectCity(0); // no cities, should do nothing
     expect(vm.selectedIndex, 0);
 
@@ -57,8 +56,12 @@ void main() {
   test('Cannot add duplicate city', () async {
     final vm = WeatherViewModel(service: FakeWeatherService());
 
-    await vm.addCityFromCoords(const City(name: 'Pittsburgh', latitude: 40, longitude: -79));
-    await vm.addCityFromCoords(const City(name: 'Pittsburgh', latitude: 40, longitude: -79));
+    await vm.addCityFromCoords(
+      const City(name: 'Pittsburgh', latitude: 40, longitude: -79),
+    );
+    await vm.addCityFromCoords(
+      const City(name: 'Pittsburgh', latitude: 40, longitude: -79),
+    );
 
     expect(vm.cities.length, 1);
     expect(vm.error, 'City already added');

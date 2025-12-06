@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _cityController = TextEditingController();
   final _pageController = PageController();
   int _lastCityCount = 0;
+  bool _dialogSwipeHintShown = false;
 
   @override
   void initState() {
@@ -197,25 +198,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                     );
                                     final showPrecip =
                                         _isPrecipitation(code) && precip > 0;
-                                  final label = hourIndex == 0
-                                      ? 'Now'
-                                      : _formatHour(time);
-                                  return _HourlyTile(
-                                    label: label,
-                                    temperature: hourIndex == 0
-                                        ? cityWeather
+                                    final label = hourIndex == 0
+                                        ? 'Now'
+                                        : _formatHour(time);
+                                    return _HourlyTile(
+                                      label: label,
+                                      temperature: hourIndex == 0
+                                          ? cityWeather
                                                 .bundle
                                                 .current
                                                 .temperature
-                                        : hourlyTemps[actualIndex],
-                                    code: code,
-                                    precipChance: showPrecip ? precip : null,
-                                    isNight: _isNight(time),
-                                  );
-                                },
-                              );
-                            },
-                          ),
+                                          : hourlyTemps[actualIndex],
+                                      code: code,
+                                      precipChance: showPrecip ? precip : null,
+                                      isNight: _isNight(time),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
                           const SizedBox(height: 24),
                           Text(
@@ -318,7 +319,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isNightForDay(DateTime day, DateTime? currentTime) {
     if (currentTime == null) return false;
     final isSameDay =
-        day.year == currentTime.year && day.month == currentTime.month && day.day == currentTime.day;
+        day.year == currentTime.year &&
+        day.month == currentTime.month &&
+        day.day == currentTime.day;
     return isSameDay && _isNight(currentTime);
   }
 
@@ -337,124 +340,200 @@ class _HomeScreenState extends State<HomeScreen> {
     return bestIndex;
   }
 
-Future<void> _showAddCityDialog() async {
-  final vm = Provider.of<WeatherViewModel>(context, listen: false);
-  _cityController.clear();
+  Future<void> _showAddCityDialog() async {
+    final vm = Provider.of<WeatherViewModel>(context, listen: false);
+    _cityController.clear();
+    final shouldShowSwipeHint = !_dialogSwipeHintShown && vm.cities.isNotEmpty;
+    bool hintVisible = shouldShowSwipeHint;
+    bool hintHideScheduled = false;
+    if (shouldShowSwipeHint) {
+      _dialogSwipeHintShown = true;
+    }
 
-  await showDialog<void>(
-    context: context,
-    builder: (context) {
-      final animatedListKey = GlobalKey<AnimatedListState>();
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        final animatedListKey = GlobalKey<AnimatedListState>();
 
       return AlertDialog(
         title: const Text('Add / Remove City'),
         content: StatefulBuilder(
           builder: (context, setStateSB) {
+            if (shouldShowSwipeHint && !hintHideScheduled) {
+              hintHideScheduled = true;
+              Future.delayed(const Duration(seconds: 3), () {
+                if (!hintVisible) return;
+                if (!context.mounted) return;
+                setStateSB(() {
+                  hintVisible = false;
+                });
+              });
+            }
             return SizedBox(
               width: double.maxFinite,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(
-                    controller: _cityController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter city name',
+                    TextField(
+                      controller: _cityController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter city name',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Current Cities:',
-                      style: Theme.of(context).textTheme.titleSmall,
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Current Cities:',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
+                    if (hintVisible) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: const [
+                          Icon(Icons.swipe_right, size: 16),
+                          SizedBox(width: 16),
+                          Text('Swipe right to delete'),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 8),
 
-                  SizedBox(
-                    height: 200,
-                    child: AnimatedList(
-                      key: animatedListKey,
-                      initialItemCount: vm.cities.length,
-                      itemBuilder: (context, index, animation) {
-                        final city = vm.cities[index];
+                    SizedBox(
+                      height: 200,
+                      child: AnimatedList(
+                        key: animatedListKey,
+                        initialItemCount: vm.cities.length,
+                        itemBuilder: (context, index, animation) {
+                          final city = vm.cities[index];
 
-                        final curved = CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeInOut,
-                        );
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          );
 
-                        return FadeTransition(
-                          opacity: curved,
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(city.city.name),
-                            trailing: const Icon(Icons.delete_outline),
-                            onTap: () {
-                              final removedCity = vm.cities[index];
-
-                              vm.removeCity(index);
-
-                              animatedListKey.currentState!.removeItem(
-                                index,
-                                (context, animation) {
-                                  final curved = CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeInOut,
-                                  );
-
-                                  return FadeTransition(
-                                    opacity: curved,
-                                    child: ListTile(
-                                      title: Text(
-                                        removedCity.city.name,
-                                        style: const TextStyle(
-                                          color: Color.fromARGB(255, 0, 0, 0),
-                                        ),
+                          return FadeTransition(
+                            opacity: curved,
+                            child: Dismissible(
+                              key: ValueKey(city.city.name),
+                              direction: DismissDirection.startToEnd,
+                              background: Container(
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.errorContainer,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onErrorContainer,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onErrorContainer,
                                       ),
                                     ),
-                                  );
-                                },
-                                duration: const Duration(milliseconds: 350),
-                              );
-
-                              setStateSB(() {});
-                            },
-                          ),
-                        );
-                      },
+                                  ],
+                                ),
+                              ),
+                              onDismissed: (_) {
+                                _removeCityAt(vm, animatedListKey, index, setStateSB);
+                              },
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(city.city.name),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () =>
+                                      _removeCityAt(vm, animatedListKey, index, setStateSB),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = _cityController.text.trim();
-              if (name.isNotEmpty) {
-                await vm.addCityByName(name);
-              }
-              if (context.mounted) Navigator.of(context).pop();
+                  ],
+                ),
+              );
             },
-            child: const Text('Add'),
           ),
-        ],
-      );
-    },
-  );
-}
 
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = _cityController.text.trim();
+                if (name.isNotEmpty) {
+                  await vm.addCityByName(name);
+                }
+                if (context.mounted) Navigator.of(context).pop();
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  void _removeCityAt(
+    WeatherViewModel vm,
+    GlobalKey<AnimatedListState> listKey,
+    int index,
+    void Function(void Function()) setStateSB,
+  ) {
+    if (index < 0 || index >= vm.cities.length) return;
+    final removedCity = vm.cities[index];
 
+    vm.removeCity(index);
 
+    listKey.currentState?.removeItem(
+      index,
+      (context, animation) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOut,
+        );
+
+        return FadeTransition(
+          opacity: curved,
+          child: ListTile(
+            title: Text(
+              removedCity.city.name,
+              style: const TextStyle(
+                color: Color.fromARGB(
+                  255,
+                  0,
+                  0,
+                  0,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      duration: const Duration(milliseconds: 350),
+    );
+
+    setStateSB(() {});
+  }
 }
 
 class _CurrentConditionsCard extends StatelessWidget {
@@ -594,7 +673,11 @@ class _DailyTile extends StatelessWidget {
 }
 
 class _WeatherIcon extends StatelessWidget {
-  const _WeatherIcon({required this.code, this.size = 32, this.isNight = false});
+  const _WeatherIcon({
+    required this.code,
+    this.size = 32,
+    this.isNight = false,
+  });
 
   final int code;
   final double size;
@@ -603,12 +686,7 @@ class _WeatherIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final asset = _iconAssetForCode(code, isNight: isNight);
-    return Image.asset(
-      asset,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-    );
+    return Image.asset(asset, width: size, height: size, fit: BoxFit.contain);
   }
 }
 
