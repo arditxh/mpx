@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/dailyModel.dart';
@@ -30,52 +31,56 @@ class WeatherService {
       '&temperature_unit=fahrenheit',
     );
     final response = await http.get(url);
-    if (response.statusCode != 200) {
-      return null;
-    }
-    final data = json.decode(response.body) as Map<String, dynamic>;
-    final currentRaw = data['current_weather'] as Map<String, dynamic>?;
-    final hourlyRaw = data['hourly'] as Map<String, dynamic>?;
-    final dailyRaw = data['daily'] as Map<String, dynamic>?;
-    final hourlyUnits = data['hourly_units'] as Map<String, dynamic>?;
-    final currentUnits = data['current_weather_units'] as Map<String, dynamic>?;
+    if (response.statusCode != 200) return null;
 
-    if (currentRaw == null || hourlyRaw == null || dailyRaw == null) {
-      return null;
-    }
-
-    final isFahrenheit = hourlyUnits?['temperature_2m'] == '°F';
-
-    Map<String, dynamic> convertCurrent(Map<String, dynamic> raw) {
-      final unit = currentUnits?['temperature'] as String?;
-      if (unit == '°F') return raw;
-      final tempC = (raw['temperature'] ?? raw['temperature_2m'] ?? 0) as num;
-      return {...raw, 'temperature': (tempC * 9 / 5) + 32};
-    }
-
-    Map<String, dynamic> convertHourly(Map<String, dynamic> raw) {
-      if (isFahrenheit) return raw;
-      final temps = (raw['temperature_2m'] as List<dynamic>)
-          .map((t) => ((t as num) * 9 / 5) + 32)
-          .toList();
-      return {...raw, 'temperature_2m': temps};
-    }
-
-    Map<String, dynamic> convertDaily(Map<String, dynamic> raw) {
-      if (isFahrenheit) return raw;
-      List<double> convertList(String key) =>
-          (raw[key] as List<dynamic>).map((t) => ((t as num) * 9 / 5) + 32).toList();
-      return {
-        ...raw,
-        'temperature_2m_max': convertList('temperature_2m_max'),
-        'temperature_2m_min': convertList('temperature_2m_min'),
-      };
-    }
-
-    return WeatherBundle(
-      current: Weather.fromJson(convertCurrent(currentRaw)),
-      hourly: HourlyModel.fromJson({'hourly': convertHourly(hourlyRaw)}),
-      daily: DailyModel.fromJson(convertDaily(dailyRaw)),
-    );
+    // Offload parsing and Fahrenheit conversion to a background isolate.
+    return compute(_parseWeatherBundle, response.body);
   }
+}
+
+WeatherBundle? _parseWeatherBundle(String body) {
+  final data = json.decode(body) as Map<String, dynamic>;
+  final currentRaw = data['current_weather'] as Map<String, dynamic>?;
+  final hourlyRaw = data['hourly'] as Map<String, dynamic>?;
+  final dailyRaw = data['daily'] as Map<String, dynamic>?;
+  final hourlyUnits = data['hourly_units'] as Map<String, dynamic>?;
+  final currentUnits = data['current_weather_units'] as Map<String, dynamic>?;
+
+  if (currentRaw == null || hourlyRaw == null || dailyRaw == null) {
+    return null;
+  }
+
+  final isFahrenheit = hourlyUnits?['temperature_2m'] == '°F';
+
+  Map<String, dynamic> convertCurrent(Map<String, dynamic> raw) {
+    final unit = currentUnits?['temperature'] as String?;
+    if (unit == '°F') return raw;
+    final tempC = (raw['temperature'] ?? raw['temperature_2m'] ?? 0) as num;
+    return {...raw, 'temperature': (tempC * 9 / 5) + 32};
+  }
+
+  Map<String, dynamic> convertHourly(Map<String, dynamic> raw) {
+    if (isFahrenheit) return raw;
+    final temps = (raw['temperature_2m'] as List<dynamic>)
+        .map((t) => ((t as num) * 9 / 5) + 32)
+        .toList();
+    return {...raw, 'temperature_2m': temps};
+  }
+
+  Map<String, dynamic> convertDaily(Map<String, dynamic> raw) {
+    if (isFahrenheit) return raw;
+    List<double> convertList(String key) =>
+        (raw[key] as List<dynamic>).map((t) => ((t as num) * 9 / 5) + 32).toList();
+    return {
+      ...raw,
+      'temperature_2m_max': convertList('temperature_2m_max'),
+      'temperature_2m_min': convertList('temperature_2m_min'),
+    };
+  }
+
+  return WeatherBundle(
+    current: Weather.fromJson(convertCurrent(currentRaw)),
+    hourly: HourlyModel.fromJson({'hourly': convertHourly(hourlyRaw)}),
+    daily: DailyModel.fromJson(convertDaily(dailyRaw)),
+  );
 }
