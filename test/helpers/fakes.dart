@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:mpx/models/dailyModel.dart';
 import 'package:mpx/models/hourlyModel.dart';
 import 'package:mpx/models/weather.dart';
+import 'package:mpx/models/weather_failure.dart';
+import 'package:mpx/repositories/weather_repository.dart';
 import 'package:mpx/services/location_service.dart';
 import 'package:mpx/services/weather_service.dart';
 
@@ -24,11 +26,13 @@ final fakeWeatherBundle = WeatherBundle(
   ),
 );
 
-class FakeWeatherService extends WeatherService {
+class FakeWeatherRepository implements WeatherRepository {
   @override
-  Future<WeatherBundle?> fetchWeather(double lat, double lon) async {
-    return fakeWeatherBundle;
-  }
+  Future<WeatherResult<WeatherBundle>> getWeatherBundle({
+    required double latitude,
+    required double longitude,
+  }) async =>
+      WeatherResult.success(fakeWeatherBundle);
 }
 
 class FakeLocationService extends LocationService {

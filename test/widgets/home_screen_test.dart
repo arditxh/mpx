@@ -12,7 +12,7 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider(
         create: (_) => WeatherViewModel(
-          service: FakeWeatherService(),
+          repository: FakeWeatherRepository(),
           location: FakeLocationService(
             result: LocationResult.success(buildFakePosition()),
           ),

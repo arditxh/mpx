@@ -8,7 +8,7 @@ import '../helpers/fakes.dart';
 void main() {
   test('addCityFromCoords adds a city successfully', () async {
     final vm = WeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: LocationResult.success(buildFakePosition()),
       ),
@@ -24,7 +24,7 @@ void main() {
 
   test('selectCity updates the selected index', () {
     final vm = WeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: LocationResult.success(buildFakePosition()),
       ),
@@ -38,7 +38,7 @@ void main() {
 
   test('Cannot add duplicate city', () async {
     final vm = WeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: LocationResult.success(buildFakePosition()),
       ),
@@ -57,7 +57,7 @@ void main() {
 
   test('bootstrap uses current location when available', () async {
     final vm = WeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: LocationResult.success(
           buildFakePosition(latitude: 50, longitude: -120),
@@ -74,7 +74,7 @@ void main() {
 
   test('bootstrap falls back with message when location denied', () async {
     final vm = WeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: const LocationResult.failure(
           LocationFailureReason.permissionDenied,

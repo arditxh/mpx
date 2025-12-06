@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/dailyModel.dart';
 import '../models/hourlyModel.dart';
+import '../models/weather_failure.dart';
 import '../models/weather.dart';
 
 class WeatherBundle {
@@ -21,7 +23,7 @@ class WeatherBundle {
 class WeatherService {
   static const _base = 'https://api.open-meteo.com/v1/forecast';
 
-  Future<WeatherBundle?> fetchWeather(double lat, double lon) async {
+  Future<WeatherBundle> fetchWeather(double lat, double lon) async {
     final url = Uri.parse(
       '$_base?latitude=$lat&longitude=$lon&current_weather=true'
       '&hourly=temperature_2m,weathercode,precipitation_probability'
@@ -30,11 +32,46 @@ class WeatherService {
       '&timezone=auto'
       '&temperature_unit=fahrenheit',
     );
-    final response = await http.get(url);
-    if (response.statusCode != 200) return null;
+    http.Response response;
+    try {
+      response = await http.get(url).timeout(const Duration(seconds: 10));
+    } on TimeoutException catch (_) {
+      throw WeatherServiceException(
+        WeatherFailureReason.network,
+        message: 'Request to weather service timed out.',
+      );
+    } catch (e) {
+      throw WeatherServiceException(
+        WeatherFailureReason.network,
+        message: 'Network error: $e',
+      );
+    }
 
-    // Offload parsing and Fahrenheit conversion to a background isolate.
-    return compute(_parseWeatherBundle, response.body);
+    if (response.statusCode != 200) {
+      throw WeatherServiceException(
+        WeatherFailureReason.invalidResponse,
+        message: 'Weather API returned HTTP ${response.statusCode}.',
+      );
+    }
+
+    try {
+      // Offload parsing and Fahrenheit conversion to a background isolate.
+      final bundle = await compute(_parseWeatherBundle, response.body);
+      if (bundle == null) {
+        throw WeatherServiceException(
+          WeatherFailureReason.parsing,
+          message: 'Received malformed weather data.',
+        );
+      }
+      return bundle;
+    } on WeatherServiceException {
+      rethrow;
+    } catch (_) {
+      throw WeatherServiceException(
+        WeatherFailureReason.parsing,
+        message: 'Failed to parse weather data.',
+      );
+    }
   }
 }
 
@@ -83,4 +120,14 @@ WeatherBundle? _parseWeatherBundle(String body) {
     hourly: HourlyModel.fromJson({'hourly': convertHourly(hourlyRaw)}),
     daily: DailyModel.fromJson(convertDaily(dailyRaw)),
   );
+}
+
+class WeatherServiceException implements Exception {
+  WeatherServiceException(this.reason, {this.message});
+
+  final WeatherFailureReason reason;
+  final String? message;
+
+  @override
+  String toString() => message ?? 'WeatherServiceException($reason)';
 }

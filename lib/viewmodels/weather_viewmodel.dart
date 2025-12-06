@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../models/city.dart';
+import '../models/weather_failure.dart';
+import '../repositories/weather_repository.dart';
 import '../services/geocoding_service.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
@@ -13,20 +15,17 @@ class CityWeather {
   final WeatherBundle bundle;
 }
 
-// class WeatherViewModel extends ChangeNotifier {
-//   final WeatherService _service = WeatherService();
-//   final GeocodingService _geocoding = GeocodingService();
 class WeatherViewModel extends ChangeNotifier {
-  // Allow injecting WeatherService for testing; defaults to real service
-  final WeatherService _service;
+  // Allow injecting repository/services for testing; defaults to real implementations
+  final WeatherRepository _repository;
   final GeocodingService _geocoding;
   final LocationService _location;
 
   WeatherViewModel({
-    WeatherService? service,
+    WeatherRepository? repository,
     GeocodingService? geocoding,
     LocationService? location,
-  })  : _service = service ?? WeatherService(),
+  })  : _repository = repository ?? HttpWeatherRepository(),
         _geocoding = geocoding ?? GeocodingService(),
         _location = location ?? LocationService();
 
@@ -104,16 +103,17 @@ class WeatherViewModel extends ChangeNotifier {
         }
       }
 
-      final bundle = await _service.fetchWeather(
-        targetCity.latitude,
-        targetCity.longitude,
+      final result = await _repository.getWeatherBundle(
+        latitude: targetCity.latitude,
+        longitude: targetCity.longitude,
       );
-      if (bundle != null) {
+      if (result.isSuccess && result.value != null) {
+        final bundle = result.value!;
         _cities[index] = CityWeather(city: targetCity, bundle: bundle);
         _error = null;
         _lastLocationFailure = null;
       } else {
-        _error = 'Weather data unavailable for ${targetCity.name}';
+        _error = _weatherErrorMessage(targetCity.name, result.failure);
       }
     } catch (e) {
       _error = 'Failed to refresh ${_cities[index].city.name}';
@@ -183,13 +183,16 @@ class WeatherViewModel extends ChangeNotifier {
       return;
     }
 
-    final bundle = await _service.fetchWeather(city.latitude, city.longitude);
-    if (bundle == null) {
-      _error = 'Weather data unavailable for ${city.name}';
+    final result = await _repository.getWeatherBundle(
+      latitude: city.latitude,
+      longitude: city.longitude,
+    );
+    if (!result.isSuccess || result.value == null) {
+      _error = _weatherErrorMessage(city.name, result.failure);
       return;
     }
 
-    _cities.add(CityWeather(city: city, bundle: bundle));
+    _cities.add(CityWeather(city: city, bundle: result.value!));
     _error = null;
     _selectedIndex = _cities.length - 1;
     notifyListeners();
@@ -208,6 +211,21 @@ class WeatherViewModel extends ChangeNotifier {
     _loading = value;
     if (!silent) {
       notifyListeners();
+    }
+  }
+
+  String _weatherErrorMessage(String cityName, WeatherFailure? failure) {
+    if (failure == null) return 'Weather data unavailable for $cityName';
+    switch (failure.reason) {
+      case WeatherFailureReason.network:
+        return 'Network issue fetching $cityName. Check your connection.';
+      case WeatherFailureReason.invalidResponse:
+        return 'Unexpected response for $cityName weather. Please retry.';
+      case WeatherFailureReason.parsing:
+        return 'Could not read weather data for $cityName. Try again later.';
+      case WeatherFailureReason.unknown:
+      default:
+        return 'Weather data unavailable for $cityName.';
     }
   }
 

@@ -12,7 +12,7 @@ void main() {
   testWidgets('Shows a city when added', (tester) async {
     // Inject fake service through constructor
     final vm = WeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: const LocationResult.failure(
           LocationFailureReason.permissionDenied,

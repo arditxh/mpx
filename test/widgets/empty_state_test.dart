@@ -9,7 +9,7 @@ import '../helpers/fakes.dart';
 
 class NoopBootstrapWeatherViewModel extends WeatherViewModel {
   NoopBootstrapWeatherViewModel({
-    super.service,
+    super.repository,
     super.geocoding,
     super.location,
   });
@@ -21,7 +21,7 @@ class NoopBootstrapWeatherViewModel extends WeatherViewModel {
 void main() {
   testWidgets('Shows empty state text when no cities added', (tester) async {
     final vm = NoopBootstrapWeatherViewModel(
-      service: FakeWeatherService(),
+      repository: FakeWeatherRepository(),
       location: FakeLocationService(
         result: const LocationResult.failure(
           LocationFailureReason.permissionDenied,
