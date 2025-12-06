@@ -7,7 +7,12 @@ class GeocodingService {
   static const _base = 'https://geocoding-api.open-meteo.com/v1/search';
 
   Future<City?> searchCity(String name) async {
-    final url = Uri.parse('$_base?name=$name&count=1&language=en&format=json');
+    final url = Uri.parse(_base).replace(queryParameters: {
+      'name': name,
+      'count': '1',
+      'language': 'en',
+      'format': 'json',
+    });
     final response = await http.get(url);
     if (response.statusCode != 200) return null;
 

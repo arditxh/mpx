@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../models/city.dart';
 import '../services/geocoding_service.dart';
+import '../services/location_service.dart';
 import '../services/weather_service.dart';
 
 class CityWeather {
@@ -18,18 +20,22 @@ class WeatherViewModel extends ChangeNotifier {
   // Allow injecting WeatherService for testing; defaults to real service
   final WeatherService _service;
   final GeocodingService _geocoding;
+  final LocationService _location;
 
   WeatherViewModel({
     WeatherService? service,
     GeocodingService? geocoding,
+    LocationService? location,
   })  : _service = service ?? WeatherService(),
-        _geocoding = geocoding ?? GeocodingService();
+        _geocoding = geocoding ?? GeocodingService(),
+        _location = location ?? LocationService();
 
 
   final List<CityWeather> _cities = [];
   bool _loading = false;
   String? _error;
   int _selectedIndex = 0;
+  LocationFailureReason? _lastLocationFailure;
 
   List<CityWeather> get cities => List.unmodifiable(_cities);
   bool get isLoading => _loading;
@@ -37,10 +43,15 @@ class WeatherViewModel extends ChangeNotifier {
   int get selectedIndex => _selectedIndex;
   CityWeather? get selected =>
       _cities.isEmpty ? null : _cities[_selectedIndex.clamp(0, _cities.length - 1)];
+  LocationFailureReason? get lastLocationFailure => _lastLocationFailure;
+  bool get canRequestLocation =>
+      _lastLocationFailure != LocationFailureReason.permissionPermanentlyDenied;
 
   Future<void> bootstrap() async {
-    if (_cities.isNotEmpty) return;
-    await addCityFromCoords(const City(name: 'Pittsburgh', latitude: 40.4406, longitude: -79.9959));
+    if (_loading) return;
+    _setLoading(true);
+    await ensureCurrentLocationCity(promptPermission: true);
+    _setLoading(false);
   }
 
   Future<void> addCityByName(String name) async {
@@ -72,16 +83,37 @@ class WeatherViewModel extends ChangeNotifier {
     if (index < 0 || index >= _cities.length) return;
     _setLoading(true, silent: true);
     try {
-      final cityWeather = _cities[index];
+      var cityWeather = _cities[index];
+      City targetCity = cityWeather.city;
+
+      // For current location, refresh coordinates before fetching weather.
+      if (targetCity.name == 'Current Location') {
+        final posResult = await _location.getCurrentPosition();
+        _lastLocationFailure = posResult.error;
+        if (posResult.position != null) {
+          targetCity = City(
+            name: 'Current Location',
+            latitude: posResult.position!.latitude,
+            longitude: posResult.position!.longitude,
+          );
+        } else {
+          _error = _locationErrorMessage(posResult.error);
+          _setLoading(false, silent: true);
+          notifyListeners();
+          return;
+        }
+      }
+
       final bundle = await _service.fetchWeather(
-        cityWeather.city.latitude,
-        cityWeather.city.longitude,
+        targetCity.latitude,
+        targetCity.longitude,
       );
       if (bundle != null) {
-        _cities[index] = CityWeather(city: cityWeather.city, bundle: bundle);
+        _cities[index] = CityWeather(city: targetCity, bundle: bundle);
         _error = null;
+        _lastLocationFailure = null;
       } else {
-        _error = 'Weather data unavailable for ${cityWeather.city.name}';
+        _error = 'Weather data unavailable for ${targetCity.name}';
       }
     } catch (e) {
       _error = 'Failed to refresh ${_cities[index].city.name}';
@@ -94,6 +126,55 @@ class WeatherViewModel extends ChangeNotifier {
     if (index < 0 || index >= _cities.length) return;
     _selectedIndex = index;
     notifyListeners();
+  }
+
+  Future<void> ensureCurrentLocationCity({bool promptPermission = false}) async {
+    if (promptPermission) {
+      await _promptForPermission();
+    }
+
+    final locationResult = await _location.getCurrentPosition();
+    _lastLocationFailure = locationResult.error;
+    if (locationResult.position != null) {
+      final city = City(
+        name: 'Current Location',
+        latitude: locationResult.position!.latitude,
+        longitude: locationResult.position!.longitude,
+      );
+      final existingIndex =
+          _cities.indexWhere((c) => c.city.name == 'Current Location');
+      if (existingIndex >= 0) {
+        await refreshCity(existingIndex);
+      } else {
+        await _addCity(city);
+      }
+      _lastLocationFailure = null;
+      return;
+    }
+
+    if (_cities.isEmpty) {
+      await _addCity(
+        const City(name: 'Pittsburgh', latitude: 40.4406, longitude: -79.9959),
+      );
+      final message = _locationErrorMessage(locationResult.error);
+      _error = '$message Showing Pittsburgh. Enable location and refresh.';
+      notifyListeners();
+    } else {
+      _error = _locationErrorMessage(locationResult.error);
+      notifyListeners();
+    }
+  }
+
+  Future<void> requestLocationAccess() async {
+    if (_loading) return;
+    _setLoading(true);
+    await _promptForPermission(force: true);
+    await ensureCurrentLocationCity();
+    _setLoading(false);
+  }
+
+  Future<void> openLocationSettings() async {
+    await _location.openAppSettings();
   }
 
   Future<void> _addCity(City city) async {
@@ -127,6 +208,40 @@ class WeatherViewModel extends ChangeNotifier {
     _loading = value;
     if (!silent) {
       notifyListeners();
+    }
+  }
+
+  String _locationErrorMessage(LocationFailureReason? reason) {
+    switch (reason) {
+      case LocationFailureReason.serviceDisabled:
+        return 'Turn on location services to see local weather.';
+      case LocationFailureReason.permissionDenied:
+        return 'Location permission denied. Enable access and refresh.';
+      case LocationFailureReason.permissionPermanentlyDenied:
+        return 'Location permission denied permanently. Enable it in system settings.';
+      case LocationFailureReason.timeout:
+        return 'Timed out while getting your location. Pull to refresh to try again.';
+      case LocationFailureReason.unavailable:
+      default:
+        return 'Location unavailable right now. Pull to refresh to retry.';
+    }
+  }
+
+  Future<void> _promptForPermission({bool force = false}) async {
+    var status = await _location.checkPermission();
+    final needsRequest = force ||
+        status == LocationPermission.denied ||
+        status == LocationPermission.unableToDetermine;
+    if (needsRequest) {
+      status = await _location.requestPermission();
+    }
+
+    if (status == LocationPermission.denied) {
+      _lastLocationFailure = LocationFailureReason.permissionDenied;
+      _error = _locationErrorMessage(_lastLocationFailure);
+    } else if (status == LocationPermission.deniedForever) {
+      _lastLocationFailure = LocationFailureReason.permissionPermanentlyDenied;
+      _error = _locationErrorMessage(_lastLocationFailure);
     }
   }
 }

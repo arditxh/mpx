@@ -1,15 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpx/services/location_service.dart';
 import 'package:mpx/views/home_screen.dart';
 import 'package:mpx/viewmodels/weather_viewmodel.dart';
 import 'package:provider/provider.dart';
 
+import '../helpers/fakes.dart';
+
+class NoopBootstrapWeatherViewModel extends WeatherViewModel {
+  NoopBootstrapWeatherViewModel({
+    super.service,
+    super.geocoding,
+    super.location,
+  });
+
+  @override
+  Future<void> bootstrap() async {}
+}
+
 void main() {
   testWidgets('Shows empty state text when no cities added', (tester) async {
-    final vm = WeatherViewModel();
+    final vm = NoopBootstrapWeatherViewModel(
+      service: FakeWeatherService(),
+      location: FakeLocationService(
+        result: const LocationResult.failure(
+          LocationFailureReason.permissionDenied,
+        ),
+      ),
+    );
 
     await tester.pumpWidget(
-      ChangeNotifierProvider.value(
+      ChangeNotifierProvider<WeatherViewModel>.value(
         value: vm,
         child: const MaterialApp(home: HomeScreen()),
       ),

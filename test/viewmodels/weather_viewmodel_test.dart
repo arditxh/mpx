@@ -1,40 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpx/viewmodels/weather_viewmodel.dart';
 import 'package:mpx/models/city.dart';
-import 'package:mpx/models/weather.dart';
-import 'package:mpx/models/hourlyModel.dart';
-import 'package:mpx/models/dailyModel.dart';
-import 'package:mpx/services/weather_service.dart';
+import 'package:mpx/services/location_service.dart';
 
-// Fake WeatherBundle to avoid hitting real API
-final fakeBundle = WeatherBundle(
-  current: Weather(temperature: 70, condition: 'Clear', code: 0),
-  hourly: HourlyModel(
-    times: [],
-    temperatures: [],
-    codes: [],
-    precipitationProbability: [],
-  ),
-  daily: DailyModel(
-    times: [],
-    tempMax: [],
-    tempMin: [],
-    codes: [],
-    precipitationProbabilityMax: [],
-  ),
-);
-
-// Fake WeatherService
-class FakeWeatherService extends WeatherService {
-  @override
-  Future<WeatherBundle?> fetchWeather(double lat, double lon) async {
-    return fakeBundle;
-  }
-}
+import '../helpers/fakes.dart';
 
 void main() {
   test('addCityFromCoords adds a city successfully', () async {
-    final vm = WeatherViewModel(service: FakeWeatherService());
+    final vm = WeatherViewModel(
+      service: FakeWeatherService(),
+      location: FakeLocationService(
+        result: LocationResult.success(buildFakePosition()),
+      ),
+    );
 
     await vm.addCityFromCoords(
       const City(name: 'Testville', latitude: 10.0, longitude: 20.0),
@@ -45,7 +23,12 @@ void main() {
   });
 
   test('selectCity updates the selected index', () {
-    final vm = WeatherViewModel(service: FakeWeatherService());
+    final vm = WeatherViewModel(
+      service: FakeWeatherService(),
+      location: FakeLocationService(
+        result: LocationResult.success(buildFakePosition()),
+      ),
+    );
     vm.selectCity(0); // no cities, should do nothing
     expect(vm.selectedIndex, 0);
 
@@ -54,7 +37,12 @@ void main() {
   });
 
   test('Cannot add duplicate city', () async {
-    final vm = WeatherViewModel(service: FakeWeatherService());
+    final vm = WeatherViewModel(
+      service: FakeWeatherService(),
+      location: FakeLocationService(
+        result: LocationResult.success(buildFakePosition()),
+      ),
+    );
 
     await vm.addCityFromCoords(
       const City(name: 'Pittsburgh', latitude: 40, longitude: -79),
@@ -65,5 +53,38 @@ void main() {
 
     expect(vm.cities.length, 1);
     expect(vm.error, 'City already added');
+  });
+
+  test('bootstrap uses current location when available', () async {
+    final vm = WeatherViewModel(
+      service: FakeWeatherService(),
+      location: FakeLocationService(
+        result: LocationResult.success(
+          buildFakePosition(latitude: 50, longitude: -120),
+        ),
+      ),
+    );
+
+    await vm.bootstrap();
+
+    expect(vm.cities, isNotEmpty);
+    expect(vm.cities.first.city.name, 'Current Location');
+    expect(vm.error, isNull);
+  });
+
+  test('bootstrap falls back with message when location denied', () async {
+    final vm = WeatherViewModel(
+      service: FakeWeatherService(),
+      location: FakeLocationService(
+        result: const LocationResult.failure(
+          LocationFailureReason.permissionDenied,
+        ),
+      ),
+    );
+
+    await vm.bootstrap();
+
+    expect(vm.cities.first.city.name, 'Pittsburgh');
+    expect(vm.error, contains('permission'));
   });
 }

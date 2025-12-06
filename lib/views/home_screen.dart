@@ -95,7 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           if (vm.cities.isEmpty) {
-            return _EmptyState(error: vm.error, onAdd: _showAddCityDialog);
+            return _EmptyState(
+              error: vm.error,
+              onAdd: _showAddCityDialog,
+              onUseLocation: vm.lastLocationFailure != null
+                  ? (vm.canRequestLocation
+                      ? vm.requestLocationAccess
+                      : vm.openLocationSettings)
+                  : null,
+            );
           }
 
           final targetIndex = vm.selectedIndex.clamp(0, vm.cities.length - 1);
@@ -111,12 +119,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Column(
             children: [
+              if (vm.isLoading)
+                const LinearProgressIndicator(minHeight: 3),
               if (vm.error != null)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    vm.error!,
-                    style: const TextStyle(color: Colors.red),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vm.error!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      if (vm.lastLocationFailure != null) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.my_location),
+                              label: Text(
+                                vm.canRequestLocation
+                                    ? 'Use my location'
+                                    : 'Open Settings',
+                              ),
+                              onPressed: vm.canRequestLocation
+                                  ? vm.requestLocationAccess
+                                  : vm.openLocationSettings,
+                            ),
+                            if (!vm.canRequestLocation)
+                              const Text(
+                                'Enable location access in system settings.',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               Expanded(
@@ -134,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _CurrentConditionsCard(
                             weather: cityWeather.bundle.current,
                             cityName: cityWeather.city.name,
+                            isNight: _isNight(cityWeather.bundle.current.time),
                           ),
                           const SizedBox(height: 24),
                           Text(
@@ -450,15 +491,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               onDismissed: (_) {
-                                _removeCityAt(vm, animatedListKey, index, setStateSB);
+                                _removeCityAt(
+                                  vm,
+                                  animatedListKey,
+                                  index,
+                                  setStateSB,
+                                  animate: false,
+                                );
                               },
                               child: ListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: Text(city.city.name),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.delete_outline),
-                                  onPressed: () =>
-                                      _removeCityAt(vm, animatedListKey, index, setStateSB),
+                                  onPressed: () => _removeCityAt(
+                                    vm,
+                                    animatedListKey,
+                                    index,
+                                    setStateSB,
+                                  ),
                                 ),
                               ),
                             ),
@@ -497,8 +548,9 @@ class _HomeScreenState extends State<HomeScreen> {
     WeatherViewModel vm,
     GlobalKey<AnimatedListState> listKey,
     int index,
-    void Function(void Function()) setStateSB,
-  ) {
+    void Function(void Function()) setStateSB, {
+    bool animate = true,
+  }) {
     if (index < 0 || index >= vm.cities.length) return;
     final removedCity = vm.cities[index];
 
@@ -507,29 +559,25 @@ class _HomeScreenState extends State<HomeScreen> {
     listKey.currentState?.removeItem(
       index,
       (context, animation) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeInOut,
-        );
-
+        if (!animate) {
+          return const SizedBox.shrink();
+        }
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOut);
         return FadeTransition(
           opacity: curved,
-          child: ListTile(
-            title: Text(
-              removedCity.city.name,
-              style: const TextStyle(
-                color: Color.fromARGB(
-                  255,
-                  0,
-                  0,
-                  0,
-                ),
+          child: SizeTransition(
+            sizeFactor: curved,
+            axisAlignment: -1,
+            child: ListTile(
+              title: Text(
+                removedCity.city.name,
+                style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
               ),
             ),
           ),
         );
       },
-      duration: const Duration(milliseconds: 350),
+      duration: animate ? const Duration(milliseconds: 300) : Duration.zero,
     );
 
     setStateSB(() {});
@@ -537,10 +585,15 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _CurrentConditionsCard extends StatelessWidget {
-  const _CurrentConditionsCard({required this.weather, required this.cityName});
+  const _CurrentConditionsCard({
+    required this.weather,
+    required this.cityName,
+    required this.isNight,
+  });
 
   final Weather weather;
   final String cityName;
+  final bool isNight;
 
   @override
   Widget build(BuildContext context) {
@@ -559,17 +612,25 @@ class _CurrentConditionsCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                weather.temperature.toStringAsFixed(1),
-                style: theme.textTheme.displayLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      weather.temperature.toStringAsFixed(1),
+                      style: theme.textTheme.displayLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text('°F', style: theme.textTheme.titleLarge),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text('°F', style: theme.textTheme.titleLarge),
-              ),
+              _WeatherIcon(code: weather.code, size: 56, isNight: isNight),
             ],
           ),
           const SizedBox(height: 8),
@@ -691,10 +752,15 @@ class _WeatherIcon extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.error, required this.onAdd});
+  const _EmptyState({
+    required this.error,
+    required this.onAdd,
+    this.onUseLocation,
+  });
 
   final String? error;
   final VoidCallback onAdd;
+  final VoidCallback? onUseLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -708,6 +774,14 @@ class _EmptyState extends StatelessWidget {
             if (error != null) ...[
               const SizedBox(height: 8),
               Text(error!, style: const TextStyle(color: Colors.red)),
+            ],
+            if (onUseLocation != null) ...[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.my_location),
+                onPressed: onUseLocation,
+                label: const Text('Use my location'),
+              ),
             ],
             const SizedBox(height: 12),
             ElevatedButton(onPressed: onAdd, child: const Text('Add a city')),
