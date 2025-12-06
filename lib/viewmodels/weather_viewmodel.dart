@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/city.dart';
-import '../models/dailyModel.dart';
-import '../models/hourlyModel.dart';
-import '../models/weather.dart';
 import '../services/geocoding_service.dart';
 import '../services/weather_service.dart';
 
@@ -114,6 +111,15 @@ class WeatherViewModel extends ChangeNotifier {
     _cities.add(CityWeather(city: city, bundle: bundle));
     _error = null;
     _selectedIndex = _cities.length - 1;
+    notifyListeners();
+  }
+
+  Future<void> removeCity(int index) async {
+    if (index < 0 || index >= _cities.length) return;
+    _cities.removeAt(index);
+    if (_selectedIndex >= _cities.length) {
+      _selectedIndex = _cities.length - 1;
+    }
     notifyListeners();
   }
 
