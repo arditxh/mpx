@@ -49,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final _cityController = TextEditingController();
   final _pageController = PageController();
   int _lastCityCount = 0;
-  int _lastSelectedIndex = 0;
 
   @override
   void initState() {
@@ -99,9 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           final targetIndex = vm.selectedIndex.clamp(0, vm.cities.length - 1);
-          if (_lastCityCount != vm.cities.length || _lastSelectedIndex != targetIndex) {
+          // Only jump pages when the list of cities changes (e.g., add/remove).
+          if (_lastCityCount != vm.cities.length) {
             _lastCityCount = vm.cities.length;
-            _lastSelectedIndex = targetIndex;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (_pageController.hasClients) {
                 _pageController.jumpToPage(targetIndex);
