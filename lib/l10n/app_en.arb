@@ -27,6 +27,25 @@
   "enterCityName": "Enter city name",
   "currentCities": "Current Cities",
   "swipeToDelete": "Swipe right to delete",
-  "delete": "Delete"
+  "delete": "Delete",
+  "now": "Now",
+  "openSettings": "Open Settings",
+  "enableLocationSettingsHint": "Enable location access in system settings.",
+  "cityRestorePartial": "Some saved cities could not be restored. Pull to refresh.",
+  "loadSavedCitiesFailed": "Failed to load saved cities.",
+  "cityNotFound": "City not found",
+  "failedToAddCity": "Failed to add city.",
+  "failedToRefreshCity": "Failed to refresh {city}.",
+  "cityAlreadyAdded": "City already added",
+  "weatherUnavailable": "Weather data unavailable for {city}.",
+  "networkIssueForCity": "Network issue fetching {city}. Check your connection.",
+  "unexpectedResponseForCity": "Unexpected response for {city} weather. Please retry.",
+  "parsingErrorForCity": "Could not read weather data for {city}. Try again later.",
+  "locationServiceDisabled": "Turn on location services to see local weather.",
+  "locationPermissionDenied": "Location permission denied. Enable access and refresh.",
+  "locationPermissionPermanentlyDenied": "Location permission denied permanently. Enable it in system settings.",
+  "locationTimeout": "Timed out while getting your location. Pull to refresh to try again.",
+  "locationUnavailable": "Location unavailable right now. Pull to refresh to retry.",
+  "locationFallbackMessage": "{message} Showing {city}. Enable location and refresh."
   
 }

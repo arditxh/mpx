@@ -84,8 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // ignore: unused_local_variable
+    final l10n = AppLocalizations.of(context)!;
     final settings = context.watch<SettingsViewModel>().settings;
+    context
+        .read<WeatherViewModel>()
+        .updateLocale(Localizations.localeOf(context));
     return Scaffold(
       appBar: AppBar(
         //title: const Text('Weather'), older one
@@ -178,17 +181,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               icon: const Icon(Icons.my_location),
                               label: Text(
                                 vm.canRequestLocation
-                                    ? 'Use my location'
-                                    : 'Open Settings',
+                                    ? l10n.useMyLocation
+                                    : l10n.openSettings,
                               ),
                               onPressed: vm.canRequestLocation
                                   ? vm.requestLocationAccess
                                   : vm.openLocationSettings,
                             ),
                             if (!vm.canRequestLocation)
-                              const Text(
-                                'Enable location access in system settings.',
-                                style: TextStyle(color: Colors.red),
+                              Text(
+                                l10n.enableLocationSettingsHint,
+                                style: const TextStyle(color: Colors.red),
                               ),
                           ],
                         ),
@@ -287,8 +290,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     final showPrecip =
                                         _isPrecipitation(code) && precip > 0;
                                     final label = hourIndex == 0
-                                        ? 'Now'
-                                        : _formatHour(time);
+                                        ? l10n.now
+                                        : _formatHour(context, time);
                                     final rawTemp = hourIndex == 0
                                         ? cityWeather.bundle.current.temperature
                                         : hourlyTemps[actualIndex];
@@ -401,16 +404,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _formatHour(DateTime time) {
-    // API returns hours in local time for the coordinates; format to a friendly 12h label.
-    final hour = time.hour;
-    final suffix = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour == 0
-        ? 12
-        : hour > 12
-        ? hour - 12
-        : hour;
-    return '$displayHour $suffix';
+  String _formatHour(BuildContext context, DateTime time) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final formatter = DateFormat.j(locale);
+    return formatter.format(time.toLocal());
   }
 
   String _formatDay(BuildContext context, DateTime date) {

@@ -262,6 +262,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
+
+  /// No description provided for @now.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get now;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// No description provided for @enableLocationSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location access in system settings.'**
+  String get enableLocationSettingsHint;
+
+  /// No description provided for @cityRestorePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some saved cities could not be restored. Pull to refresh.'**
+  String get cityRestorePartial;
+
+  /// No description provided for @loadSavedCitiesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load saved cities.'**
+  String get loadSavedCitiesFailed;
+
+  /// No description provided for @cityNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'City not found'**
+  String get cityNotFound;
+
+  /// No description provided for @failedToAddCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add city.'**
+  String get failedToAddCity;
+
+  /// No description provided for @failedToRefreshCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to refresh {city}.'**
+  String failedToRefreshCity(Object city);
+
+  /// No description provided for @cityAlreadyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'City already added'**
+  String get cityAlreadyAdded;
+
+  /// No description provided for @weatherUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather data unavailable for {city}.'**
+  String weatherUnavailable(Object city);
+
+  /// No description provided for @networkIssueForCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Network issue fetching {city}. Check your connection.'**
+  String networkIssueForCity(Object city);
+
+  /// No description provided for @unexpectedResponseForCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected response for {city} weather. Please retry.'**
+  String unexpectedResponseForCity(Object city);
+
+  /// No description provided for @parsingErrorForCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read weather data for {city}. Try again later.'**
+  String parsingErrorForCity(Object city);
+
+  /// No description provided for @locationServiceDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services to see local weather.'**
+  String get locationServiceDisabled;
+
+  /// No description provided for @locationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied. Enable access and refresh.'**
+  String get locationPermissionDenied;
+
+  /// No description provided for @locationPermissionPermanentlyDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied permanently. Enable it in system settings.'**
+  String get locationPermissionPermanentlyDenied;
+
+  /// No description provided for @locationTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed out while getting your location. Pull to refresh to try again.'**
+  String get locationTimeout;
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Location unavailable right now. Pull to refresh to retry.'**
+  String get locationUnavailable;
+
+  /// No description provided for @locationFallbackMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{message} Showing {city}. Enable location and refresh.'**
+  String locationFallbackMessage(Object city, Object message);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

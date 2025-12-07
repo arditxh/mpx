@@ -27,6 +27,25 @@
   "enterCityName": "Ingrese el nombre de la ciudad",
   "currentCities": "Ciudades actuales",
   "swipeToDelete": "Desliza a la derecha para eliminar",
-  "delete": "Eliminar"
+  "delete": "Eliminar",
+  "now": "Ahora",
+  "openSettings": "Abrir configuración",
+  "enableLocationSettingsHint": "Habilita el acceso a la ubicación en la configuración del sistema.",
+  "cityRestorePartial": "Algunas ciudades guardadas no se pudieron restaurar. Desliza para actualizar.",
+  "loadSavedCitiesFailed": "No se pudieron cargar las ciudades guardadas.",
+  "cityNotFound": "Ciudad no encontrada",
+  "failedToAddCity": "No se pudo agregar la ciudad.",
+  "failedToRefreshCity": "No se pudo actualizar {city}.",
+  "cityAlreadyAdded": "Ciudad ya agregada",
+  "weatherUnavailable": "Datos del clima no disponibles para {city}.",
+  "networkIssueForCity": "Problema de red al obtener {city}. Verifica tu conexión.",
+  "unexpectedResponseForCity": "Respuesta inesperada para el clima de {city}. Inténtalo de nuevo.",
+  "parsingErrorForCity": "No se pudieron leer los datos del clima de {city}. Inténtalo más tarde.",
+  "locationServiceDisabled": "Activa los servicios de ubicación para ver el clima local.",
+  "locationPermissionDenied": "Permiso de ubicación denegado. Habilita el acceso y actualiza.",
+  "locationPermissionPermanentlyDenied": "Permiso de ubicación denegado permanentemente. Habilítalo en la configuración del sistema.",
+  "locationTimeout": "Se agotó el tiempo al obtener tu ubicación. Desliza para actualizar e inténtalo de nuevo.",
+  "locationUnavailable": "Ubicación no disponible en este momento. Desliza para reintentar.",
+  "locationFallbackMessage": "{message} Mostrando {city}. Habilita la ubicación y actualiza."
 
 }

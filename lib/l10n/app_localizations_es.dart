@@ -91,4 +91,73 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get delete => 'Eliminar';
+
+  @override
+  String get now => 'Ahora';
+
+  @override
+  String get openSettings => 'Abrir configuración';
+
+  @override
+  String get enableLocationSettingsHint => 'Habilita el acceso a la ubicación en la configuración del sistema.';
+
+  @override
+  String get cityRestorePartial => 'Algunas ciudades guardadas no se pudieron restaurar. Desliza para actualizar.';
+
+  @override
+  String get loadSavedCitiesFailed => 'No se pudieron cargar las ciudades guardadas.';
+
+  @override
+  String get cityNotFound => 'Ciudad no encontrada';
+
+  @override
+  String get failedToAddCity => 'No se pudo agregar la ciudad.';
+
+  @override
+  String failedToRefreshCity(Object city) {
+    return 'No se pudo actualizar $city.';
+  }
+
+  @override
+  String get cityAlreadyAdded => 'Ciudad ya agregada';
+
+  @override
+  String weatherUnavailable(Object city) {
+    return 'Datos del clima no disponibles para $city.';
+  }
+
+  @override
+  String networkIssueForCity(Object city) {
+    return 'Problema de red al obtener $city. Verifica tu conexión.';
+  }
+
+  @override
+  String unexpectedResponseForCity(Object city) {
+    return 'Respuesta inesperada para el clima de $city. Inténtalo de nuevo.';
+  }
+
+  @override
+  String parsingErrorForCity(Object city) {
+    return 'No se pudieron leer los datos del clima de $city. Inténtalo más tarde.';
+  }
+
+  @override
+  String get locationServiceDisabled => 'Activa los servicios de ubicación para ver el clima local.';
+
+  @override
+  String get locationPermissionDenied => 'Permiso de ubicación denegado. Habilita el acceso y actualiza.';
+
+  @override
+  String get locationPermissionPermanentlyDenied => 'Permiso de ubicación denegado permanentemente. Habilítalo en la configuración del sistema.';
+
+  @override
+  String get locationTimeout => 'Se agotó el tiempo al obtener tu ubicación. Desliza para actualizar e inténtalo de nuevo.';
+
+  @override
+  String get locationUnavailable => 'Ubicación no disponible en este momento. Desliza para reintentar.';
+
+  @override
+  String locationFallbackMessage(Object city, Object message) {
+    return '$message Mostrando $city. Habilita la ubicación y actualiza.';
+  }
 }

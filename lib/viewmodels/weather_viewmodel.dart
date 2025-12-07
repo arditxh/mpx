@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -5,6 +7,7 @@ import '../models/city.dart';
 import '../models/weather_failure.dart';
 import '../repositories/city_repository.dart';
 import '../repositories/weather_repository.dart';
+import '../l10n/app_localizations.dart';
 import '../services/geocoding_service.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
@@ -28,16 +31,19 @@ class WeatherViewModel extends ChangeNotifier {
     GeocodingService? geocoding,
     LocationService? location,
     CityRepository? cityRepository,
+    Locale? locale,
   }) : _repository = repository ?? HttpWeatherRepository(),
        _geocoding = geocoding ?? GeocodingService(),
        _location = location ?? LocationService(),
-       _cityRepository = cityRepository ?? SharedPrefsCityRepository();
+       _cityRepository = cityRepository ?? SharedPrefsCityRepository(),
+       _locale = locale ?? const Locale('en');
 
   final List<CityWeather> _cities = [];
   bool _loading = false;
   String? _error;
   int _selectedIndex = 0;
   LocationFailureReason? _lastLocationFailure;
+  Locale _locale;
 
   List<CityWeather> get cities => List.unmodifiable(_cities);
   bool get isLoading => _loading;
@@ -49,6 +55,18 @@ class WeatherViewModel extends ChangeNotifier {
   LocationFailureReason? get lastLocationFailure => _lastLocationFailure;
   bool get canRequestLocation =>
       _lastLocationFailure != LocationFailureReason.permissionPermanentlyDenied;
+  AppLocalizations get _strings {
+    final match = AppLocalizations.supportedLocales.firstWhere(
+      (l) => l.languageCode == _locale.languageCode,
+      orElse: () => const Locale('en'),
+    );
+    return lookupAppLocalizations(match);
+  }
+
+  void updateLocale(Locale locale) {
+    if (_locale.languageCode == locale.languageCode) return;
+    _locale = locale;
+  }
 
   Future<void> bootstrap() async {
     if (_loading) return;
@@ -80,10 +98,10 @@ class WeatherViewModel extends ChangeNotifier {
         _selectedIndex = 0;
       }
       if (restoreFailed) {
-        _error = 'Some saved cities could not be restored. Pull to refresh.';
+        _error = _strings.cityRestorePartial;
       }
     } catch (_) {
-      _error ??= 'Failed to load saved cities.';
+      _error ??= _strings.loadSavedCitiesFailed;
     }
     notifyListeners();
   }
@@ -93,12 +111,12 @@ class WeatherViewModel extends ChangeNotifier {
     try {
       final city = await _geocoding.searchCity(name);
       if (city == null) {
-        _error = 'City not found';
+        _error = _strings.cityNotFound;
       } else {
         await _addCity(city);
       }
     } catch (e) {
-      _error = 'Failed to add city.';
+      _error = _strings.failedToAddCity;
     }
     _setLoading(false);
   }
@@ -108,7 +126,7 @@ class WeatherViewModel extends ChangeNotifier {
     try {
       await _addCity(city);
     } catch (e) {
-      _error = 'Failed to add city.';
+      _error = _strings.failedToAddCity;
     }
     _setLoading(false);
   }
@@ -152,7 +170,8 @@ class WeatherViewModel extends ChangeNotifier {
         _error = _weatherErrorMessage(targetCity.name, result.failure);
       }
     } catch (e) {
-      _error = 'Failed to refresh ${_cities[index].city.name}';
+      final name = _cities[index].city.name;
+      _error = _strings.failedToRefreshCity(name);
     }
     _setLoading(false, silent: true);
     notifyListeners();
@@ -192,11 +211,14 @@ class WeatherViewModel extends ChangeNotifier {
     }
 
     if (_cities.isEmpty) {
-      await _addCity(
-        const City(name: 'Pittsburgh', latitude: 40.4406, longitude: -79.9959),
+      const fallbackCity = City(
+        name: 'Pittsburgh',
+        latitude: 40.4406,
+        longitude: -79.9959,
       );
+      await _addCity(fallbackCity);
       final message = _locationErrorMessage(locationResult.error);
-      _error = '$message Showing Pittsburgh. Enable location and refresh.';
+      _error = _strings.locationFallbackMessage(fallbackCity.name, message);
       notifyListeners();
     } else {
       _error = _locationErrorMessage(locationResult.error);
@@ -220,7 +242,7 @@ class WeatherViewModel extends ChangeNotifier {
     if (_cities.any(
       (c) => c.city.name.toLowerCase() == city.name.toLowerCase(),
     )) {
-      _error = 'City already added';
+      _error = _strings.cityAlreadyAdded;
       return;
     }
 
@@ -266,33 +288,33 @@ class WeatherViewModel extends ChangeNotifier {
   }
 
   String _weatherErrorMessage(String cityName, WeatherFailure? failure) {
-    if (failure == null) return 'Weather data unavailable for $cityName';
+    if (failure == null) return _strings.weatherUnavailable(cityName);
     switch (failure.reason) {
       case WeatherFailureReason.network:
-        return 'Network issue fetching $cityName. Check your connection.';
+        return _strings.networkIssueForCity(cityName);
       case WeatherFailureReason.invalidResponse:
-        return 'Unexpected response for $cityName weather. Please retry.';
+        return _strings.unexpectedResponseForCity(cityName);
       case WeatherFailureReason.parsing:
-        return 'Could not read weather data for $cityName. Try again later.';
+        return _strings.parsingErrorForCity(cityName);
       case WeatherFailureReason.unknown:
       default:
-        return 'Weather data unavailable for $cityName.';
+        return _strings.weatherUnavailable(cityName);
     }
   }
 
   String _locationErrorMessage(LocationFailureReason? reason) {
     switch (reason) {
       case LocationFailureReason.serviceDisabled:
-        return 'Turn on location services to see local weather.';
+        return _strings.locationServiceDisabled;
       case LocationFailureReason.permissionDenied:
-        return 'Location permission denied. Enable access and refresh.';
+        return _strings.locationPermissionDenied;
       case LocationFailureReason.permissionPermanentlyDenied:
-        return 'Location permission denied permanently. Enable it in system settings.';
+        return _strings.locationPermissionPermanentlyDenied;
       case LocationFailureReason.timeout:
-        return 'Timed out while getting your location. Pull to refresh to try again.';
+        return _strings.locationTimeout;
       case LocationFailureReason.unavailable:
       default:
-        return 'Location unavailable right now. Pull to refresh to retry.';
+        return _strings.locationUnavailable;
     }
   }
 
