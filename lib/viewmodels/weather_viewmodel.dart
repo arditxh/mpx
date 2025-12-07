@@ -33,10 +33,10 @@ class WeatherViewModel extends ChangeNotifier {
     CityRepository? cityRepository,
     Locale? locale,
   }) : _repository = repository ?? HttpWeatherRepository(),
-       _geocoding = geocoding ?? GeocodingService(),
-       _location = location ?? LocationService(),
-       _cityRepository = cityRepository ?? SharedPrefsCityRepository(),
-       _locale = locale ?? const Locale('en');
+      _geocoding = geocoding ?? GeocodingService(),
+      _location = location ?? LocationService(),
+      _cityRepository = cityRepository ?? SharedPrefsCityRepository(),
+      _locale = locale ?? const Locale('en');
 
   final List<CityWeather> _cities = [];
   bool _loading = false;
