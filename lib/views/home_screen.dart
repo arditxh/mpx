@@ -1,125 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/weather.dart';
-import '../models/city.dart';
 import '../viewmodels/settings_viewmodel.dart';
 import '../viewmodels/weather_viewmodel.dart';
 import 'settings_screen.dart';
 import '../l10n/app_localizations.dart';
-import 'package:intl/intl.dart';
-
-String _iconAssetForCode(int code, {required bool isNight}) {
-  // Map Open-Meteo weather codes to local assets.
-  if (_isThunderstorm(code)) {
-    const hailCodes = {96, 99};
-    return hailCodes.contains(code)
-        ? 'icons/thunderstorm-with-hail.png'
-        : 'icons/thunderstorm.png';
-  }
-
-  if (_isPrecipitation(code)) {
-    // Snow codes
-    const snowCodes = {71, 73, 75, 77, 85, 86};
-    return snowCodes.contains(code) ? 'icons/snow.png' : 'icons/rain.png';
-  }
-
-  switch (code) {
-    case 0:
-      return isNight ? 'icons/clear-night.png' : 'icons/sunny.png';
-    case 1:
-    case 2:
-      return isNight ? 'icons/cloudy-night.png' : 'icons/partly-cloudy.png';
-    case 3:
-    case 45:
-    case 48:
-      return isNight ? 'icons/cloudy-night.png' : 'icons/partly-cloudy.png';
-    default:
-      return isNight ? 'icons/cloudy-night.png' : 'icons/partly-cloudy.png';
-  }
-}
-
-bool _isThunderstorm(int code) => {95, 96, 99}.contains(code);
-
-bool _isPrecipitation(int code) {
-  const precipCodes = {
-    51, 53, 55, 56, 57, // drizzle / freezing drizzle
-    61, 63, 65, 66, 67, // rain / freezing rain
-    71, 73, 75, 77, 85, 86, // snow
-    80, 81, 82, // rain showers
-    95, 96, 99, // thunderstorms
-  };
-  return precipCodes.contains(code);
-}
-
-int _roundToNearestFive(int value) => (value / 5).round() * 5;
-double _displayTemp(double tempF, bool useCelsius) =>
-    useCelsius ? (tempF - 32) * 5 / 9 : tempF;
-String _unitLabel(bool useCelsius) => useCelsius ? '°C' : '°F';
-String _localizedCityName(City city, AppLocalizations l10n) =>
-    city.name == 'Current Location' ? l10n.currentLocation : city.name;
-
-String _localizedConditionLabel(int code, AppLocalizations l10n) {
-  switch (code) {
-    case 0:
-      return l10n.weatherClear;
-    case 1:
-      return l10n.weatherMainlyClear;
-    case 2:
-      return l10n.weatherPartlyCloudy;
-    case 3:
-      return l10n.weatherOvercast;
-    case 45:
-      return l10n.weatherFog;
-    case 48:
-      return l10n.weatherRimeFog;
-    case 51:
-      return l10n.weatherLightDrizzle;
-    case 53:
-      return l10n.weatherModerateDrizzle;
-    case 55:
-      return l10n.weatherDenseDrizzle;
-    case 56:
-      return l10n.weatherLightFreezingDrizzle;
-    case 57:
-      return l10n.weatherFreezingDrizzle;
-    case 61:
-      return l10n.weatherSlightRain;
-    case 63:
-      return l10n.weatherModerateRain;
-    case 65:
-      return l10n.weatherHeavyRain;
-    case 66:
-      return l10n.weatherLightFreezingRain;
-    case 67:
-      return l10n.weatherFreezingRain;
-    case 71:
-      return l10n.weatherSlightSnowFall;
-    case 73:
-      return l10n.weatherModerateSnowFall;
-    case 75:
-      return l10n.weatherHeavySnowFall;
-    case 77:
-      return l10n.weatherSnowGrains;
-    case 80:
-      return l10n.weatherSlightRainShowers;
-    case 81:
-      return l10n.weatherModerateRainShowers;
-    case 82:
-      return l10n.weatherViolentRainShowers;
-    case 85:
-      return l10n.weatherSlightSnowShowers;
-    case 86:
-      return l10n.weatherHeavySnowShowers;
-    case 95:
-      return l10n.weatherThunderstorm;
-    case 96:
-      return l10n.weatherThunderstormWithHail;
-    case 99:
-      return l10n.weatherHeavyThunderstormWithHail;
-    default:
-      return l10n.weatherPartlyCloudy;
-  }
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -152,9 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settings = context.watch<SettingsViewModel>().settings;
-    context
-        .read<WeatherViewModel>()
-        .updateLocale(Localizations.localeOf(context));
+    context.read<WeatherViewModel>().updateLocale(
+      Localizations.localeOf(context),
+    );
     return Scaffold(
       appBar: AppBar(
         //title: const Text('Weather'), older one
@@ -186,23 +70,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Consumer<WeatherViewModel>(
         builder: (context, vm, child) {
-          if (vm.isLoading && vm.cities.isEmpty) {
+          final presentation = vm.toPresentation(settings, l10n);
+
+          if (presentation.isLoading && presentation.cities.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (vm.cities.isEmpty) {
+          if (presentation.cities.isEmpty) {
             return _EmptyState(
-              error: vm.error,
+              error: presentation.error,
               onAdd: _showAddCityDialog,
-              onUseLocation: vm.lastLocationFailure != null
-                  ? (vm.canRequestLocation
+              onUseLocation: presentation.lastLocationFailure != null
+                  ? (presentation.canRequestLocation
                         ? vm.requestLocationAccess
                         : vm.openLocationSettings)
                   : null,
             );
           }
 
-          final useCelsius = settings.useCelsius;
           final compactLayout = settings.compactLayout;
           final cardSpacing = compactLayout ? 16.0 : 24.0;
           final basePadding = compactLayout ? 12.0 : 16.0;
@@ -213,10 +98,13 @@ class _HomeScreenState extends State<HomeScreen> {
             basePadding + 40,
           );
 
-          final targetIndex = vm.selectedIndex.clamp(0, vm.cities.length - 1);
+          final targetIndex = presentation.selectedIndex.clamp(
+            0,
+            presentation.cities.length - 1,
+          );
           // Only jump pages when the list of cities changes (e.g., add/remove).
-          if (_lastCityCount != vm.cities.length) {
-            _lastCityCount = vm.cities.length;
+          if (_lastCityCount != presentation.cities.length) {
+            _lastCityCount = presentation.cities.length;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (_pageController.hasClients) {
                 _pageController.jumpToPage(targetIndex);
@@ -226,18 +114,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Column(
             children: [
-              if (vm.isLoading) const LinearProgressIndicator(minHeight: 3),
-              if (vm.error != null)
+              if (presentation.isLoading)
+                const LinearProgressIndicator(minHeight: 3),
+              if (presentation.error != null)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        vm.error!,
+                        presentation.error!,
                         style: const TextStyle(color: Colors.red),
                       ),
-                      if (vm.lastLocationFailure != null) ...[
+                      if (presentation.lastLocationFailure != null) ...[
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -246,15 +135,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             ElevatedButton.icon(
                               icon: const Icon(Icons.my_location),
                               label: Text(
-                                vm.canRequestLocation
+                                presentation.canRequestLocation
                                     ? l10n.useMyLocation
                                     : l10n.openSettings,
                               ),
-                              onPressed: vm.canRequestLocation
+                              onPressed: presentation.canRequestLocation
                                   ? vm.requestLocationAccess
                                   : vm.openLocationSettings,
                             ),
-                            if (!vm.canRequestLocation)
+                            if (!presentation.canRequestLocation)
                               Text(
                                 l10n.enableLocationSettingsHint,
                                 style: const TextStyle(color: Colors.red),
@@ -269,26 +158,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: vm.selectCity,
-                  itemCount: vm.cities.length,
+                  itemCount: presentation.cities.length,
                   itemBuilder: (context, index) {
-                    final cityWeather = vm.cities[index];
-                    final displayCityName =
-                        _localizedCityName(cityWeather.city, l10n);
-                    final conditionLabel = _localizedConditionLabel(
-                      cityWeather.bundle.current.code,
-                      l10n,
-                    );
+                    final cityWeather = presentation.cities[index];
                     return RefreshIndicator(
                       onRefresh: () => vm.refreshCity(index),
                       child: ListView(
                         padding: listPadding,
                         children: [
                           _CurrentConditionsCard(
-                            weather: cityWeather.bundle.current,
-                            cityName: displayCityName,
-                            conditionLabel: conditionLabel,
-                            isNight: _isNight(cityWeather.bundle.current.time),
-                            useCelsius: useCelsius,
+                            cityName: cityWeather.displayName,
+                            conditionLabel: cityWeather.conditionLabel,
+                            temperature: cityWeather.currentTemp,
+                            unitLabel: cityWeather.unitLabel,
+                            iconAsset: cityWeather.iconAsset,
                           ),
                           SizedBox(height: cardSpacing),
                           Text(
@@ -307,78 +190,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               final scaledHeight = (baseHeight * textScale)
                                   .clamp(baseHeight, baseHeight * 1.8);
 
-                              final hourlyTimes =
-                                  cityWeather.bundle.hourly.times;
-                              final hourlyTemps =
-                                  cityWeather.bundle.hourly.temperatures;
-                              final hourlyCodes =
-                                  cityWeather.bundle.hourly.codes;
-                              final currentTime =
-                                  cityWeather.bundle.current.time;
-                              int start = 0;
-
-                              if (currentTime != null) {
-                                start = hourlyTimes.indexWhere(
-                                  (t) => t.isAtSameMomentAs(currentTime),
-                                );
-                                if (start == -1) {
-                                  start = _closestIndex(
-                                    hourlyTimes,
-                                    currentTime,
-                                  );
-                                }
-                              }
-
-                              int displayCount = hourlyTimes.length - start;
-                              if (displayCount > 24) displayCount = 24;
-                              if (displayCount <= 0)
-                                displayCount = hourlyTimes.length;
-
                               return SizedBox(
                                 height: scaledHeight,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
-                                  itemCount: displayCount,
+                                  itemCount: cityWeather.hourly.length,
                                   separatorBuilder: (_, __) =>
                                       SizedBox(width: compactLayout ? 8 : 12),
                                   itemBuilder: (context, hourIndex) {
-                                    final actualIndex = start + hourIndex;
-                                    final time = hourlyTimes[actualIndex];
-                                    final code = hourlyCodes[actualIndex];
-                                    final precipRaw =
-                                        cityWeather
-                                                .bundle
-                                                .hourly
-                                                .precipitationProbability
-                                                .length >
-                                            actualIndex
-                                        ? cityWeather
-                                              .bundle
-                                              .hourly
-                                              .precipitationProbability[actualIndex]
-                                        : 0;
-                                    final precip = _roundToNearestFive(
-                                      precipRaw,
-                                    );
-                                    final showPrecip =
-                                        _isPrecipitation(code) && precip > 0;
-                                    final label = hourIndex == 0
-                                        ? l10n.now
-                                        : _formatHour(context, time);
-                                    final rawTemp = hourIndex == 0
-                                        ? cityWeather.bundle.current.temperature
-                                        : hourlyTemps[actualIndex];
-                                    final displayTemp = _displayTemp(
-                                      rawTemp,
-                                      useCelsius,
-                                    );
+                                    final hour = cityWeather.hourly[hourIndex];
                                     return _HourlyTile(
-                                      label: label,
-                                      temperature: displayTemp,
-                                      code: code,
-                                      precipChance: showPrecip ? precip : null,
-                                      unitLabel: _unitLabel(useCelsius),
-                                      isNight: _isNight(time),
+                                      label: hour.label,
+                                      temperature: hour.temperature,
+                                      unitLabel: hour.unitLabel,
+                                      precipChance: hour.precipChance,
+                                      iconAsset: hour.iconAsset,
                                     );
                                   },
                                 ),
@@ -395,62 +221,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: cityWeather.bundle.daily.times.length,
+                            itemCount: cityWeather.daily.length,
                             separatorBuilder: (_, __) =>
                                 const Divider(height: 1),
                             itemBuilder: (context, dayIndex) {
+                              final day = cityWeather.daily[dayIndex];
                               return _DailyTile(
-                                label:
-                                    _isToday(
-                                      cityWeather.bundle.daily.times[dayIndex],
-                                    )
-                                    ? l10n.today
-                                    : _formatDay(
-                                        context,
-                                        cityWeather
-                                            .bundle
-                                            .daily
-                                            .times[dayIndex],
-                                      ),
-                                high: _displayTemp(
-                                  cityWeather.bundle.daily.tempMax[dayIndex],
-                                  useCelsius,
-                                ),
-                                low: _displayTemp(
-                                  cityWeather.bundle.daily.tempMin[dayIndex],
-                                  useCelsius,
-                                ),
-                                code: cityWeather.bundle.daily.codes[dayIndex],
-                                precipChance: () {
-                                  final raw =
-                                      cityWeather
-                                              .bundle
-                                              .daily
-                                              .precipitationProbabilityMax
-                                              .length >
-                                          dayIndex
-                                      ? cityWeather
-                                            .bundle
-                                            .daily
-                                            .precipitationProbabilityMax[dayIndex]
-                                      : 0;
-                                  final rounded = _roundToNearestFive(raw);
-                                  final hasPrecip =
-                                      _isPrecipitation(
-                                        cityWeather
-                                            .bundle
-                                            .daily
-                                            .codes[dayIndex],
-                                      ) &&
-                                      rounded > 0;
-                                  return hasPrecip ? rounded : null;
-                                }(),
-                                isNight: _isNightForDay(
-                                  cityWeather.bundle.daily.times[dayIndex],
-                                  cityWeather.bundle.current.time,
-                                ),
+                                label: day.label,
+                                high: day.high,
+                                low: day.low,
+                                precipChance: day.precipChance,
                                 compact: compactLayout,
-                                unitLabel: _unitLabel(useCelsius),
+                                unitLabel: day.unitLabel,
+                                iconAsset: day.iconAsset,
                               );
                             },
                           ),
@@ -462,8 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 8),
               _PageIndicator(
-                count: vm.cities.length,
-                index: vm.selectedIndex,
+                count: presentation.cities.length,
+                index: presentation.selectedIndex,
                 onTap: (i) {
                   vm.selectCity(i);
                   _pageController.jumpToPage(i);
@@ -475,56 +258,6 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
-  }
-
-  String _formatHour(BuildContext context, DateTime time) {
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final formatter = DateFormat.j(locale);
-    return formatter.format(time.toLocal());
-  }
-
-  String _formatDay(BuildContext context, DateTime date) {
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final formatter = DateFormat.E(locale);
-    return formatter.format(date.toLocal());
-  }
-
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    final local = date.toLocal();
-    return local.year == now.year &&
-        local.month == now.month &&
-        local.day == now.day;
-  }
-
-  bool _isNight(DateTime? time) {
-    if (time == null) return false;
-    final hour = time.toLocal().hour;
-    return hour >= 18 || hour < 6;
-  }
-
-  bool _isNightForDay(DateTime day, DateTime? currentTime) {
-    if (currentTime == null) return false;
-    final isSameDay =
-        day.year == currentTime.year &&
-        day.month == currentTime.month &&
-        day.day == currentTime.day;
-    return isSameDay && _isNight(currentTime);
-  }
-
-  int _closestIndex(List<DateTime> times, DateTime target) {
-    if (times.isEmpty) return 0;
-    int bestIndex = 0;
-    Duration bestDiff = times.first.difference(target).abs();
-
-    for (var i = 1; i < times.length; i++) {
-      final diff = times[i].difference(target).abs();
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestIndex = i;
-      }
-    }
-    return bestIndex;
   }
 
   Future<void> _showAddCityDialog() async {
@@ -547,6 +280,8 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text(l10n.addRemoveCity), //Text('Add / Remove City'),
           content: StatefulBuilder(
             builder: (context, setStateSB) {
+              final settings = context.read<SettingsViewModel>().settings;
+              final presentation = vm.toPresentation(settings, l10n);
               if (shouldShowSwipeHint && !hintHideScheduled) {
                 hintHideScheduled = true;
                 Future.delayed(const Duration(seconds: 3), () {
@@ -594,13 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 200,
                       child: AnimatedList(
                         key: animatedListKey,
-                        initialItemCount: vm.cities.length,
+                        initialItemCount: presentation.cities.length,
                         itemBuilder: (context, index, animation) {
-                          final city = vm.cities[index];
-                          final displayName = _localizedCityName(
-                            city.city,
-                            l10n,
-                          );
+                          final city = presentation.cities[index];
+                          final displayName = city.displayName;
 
                           final curved = CurvedAnimation(
                             parent: animation,
@@ -610,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           return FadeTransition(
                             opacity: curved,
                             child: Dismissible(
-                              key: ValueKey(city.city.name),
+                              key: ValueKey(city.id),
                               direction: DismissDirection.startToEnd,
                               background: Container(
                                 alignment: Alignment.centerLeft,
@@ -650,6 +382,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   animatedListKey,
                                   index,
                                   setStateSB,
+                                  removedName: displayName,
                                   animate: false,
                                 );
                               },
@@ -703,10 +436,11 @@ class _HomeScreenState extends State<HomeScreen> {
     GlobalKey<AnimatedListState> listKey,
     int index,
     void Function(void Function()) setStateSB, {
+    String? removedName,
     bool animate = true,
   }) {
     if (index < 0 || index >= vm.cities.length) return;
-    final removedCity = vm.cities[index];
+    final removedCityName = removedName ?? vm.cities[index].city.name;
 
     vm.removeCity(index);
 
@@ -725,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
           axisAlignment: -1,
           child: ListTile(
             title: Text(
-              removedCity.city.name,
+              removedCityName,
               style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
             ),
           ),
@@ -739,24 +473,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _CurrentConditionsCard extends StatelessWidget {
   const _CurrentConditionsCard({
-    required this.weather,
     required this.cityName,
     required this.conditionLabel,
-    required this.isNight,
-    required this.useCelsius,
+    required this.temperature,
+    required this.unitLabel,
+    required this.iconAsset,
   });
 
-  final Weather weather;
   final String cityName;
   final String conditionLabel;
-  final bool isNight;
-  final bool useCelsius;
+  final double temperature;
+  final String unitLabel;
+  final String iconAsset;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final displayTemp = _displayTemp(weather.temperature, useCelsius);
-    final unitLabel = _unitLabel(useCelsius);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -776,7 +508,7 @@ class _CurrentConditionsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      displayTemp.toStringAsFixed(1),
+                      temperature.toStringAsFixed(1),
                       style: theme.textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -789,7 +521,7 @@ class _CurrentConditionsCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _WeatherIcon(code: weather.code, size: 56, isNight: isNight),
+              _WeatherIcon(asset: iconAsset, size: 56),
             ],
           ),
           const SizedBox(height: 8),
@@ -804,18 +536,16 @@ class _HourlyTile extends StatelessWidget {
   const _HourlyTile({
     required this.label,
     required this.temperature,
-    required this.code,
     required this.unitLabel,
+    required this.iconAsset,
     this.precipChance,
-    this.isNight = false,
   });
 
   final String label;
   final double temperature;
-  final int code;
+  final String iconAsset;
   final String unitLabel;
   final int? precipChance;
-  final bool isNight;
 
   @override
   Widget build(BuildContext context) {
@@ -837,11 +567,7 @@ class _HourlyTile extends StatelessWidget {
         children: [
           Text(label, style: theme.textTheme.bodyMedium),
           SizedBox(height: textScale >= 1.2 ? 8 : 6),
-          _WeatherIcon(
-            code: code,
-            isNight: isNight,
-            size: iconSize,
-          ),
+          _WeatherIcon(asset: iconAsset, size: iconSize),
           SizedBox(height: textScale >= 1.2 ? 8 : 6),
           if (precipChance != null) ...[
             Text('$precipChance%', style: theme.textTheme.bodySmall),
@@ -868,9 +594,8 @@ class _DailyTile extends StatelessWidget {
     required this.label,
     required this.high,
     required this.low,
-    required this.code,
+    required this.iconAsset,
     this.precipChance,
-    this.isNight = false,
     required this.compact,
     required this.unitLabel,
   });
@@ -878,9 +603,8 @@ class _DailyTile extends StatelessWidget {
   final String label;
   final double high;
   final double low;
-  final int code;
+  final String iconAsset;
   final int? precipChance;
-  final bool isNight;
   final bool compact;
   final String unitLabel;
 
@@ -903,7 +627,7 @@ class _DailyTile extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
           ),
-          _WeatherIcon(code: code, size: iconSize, isNight: isNight),
+          _WeatherIcon(asset: iconAsset, size: iconSize),
           if (precipChance != null) ...[
             const SizedBox(width: 6),
             Text('$precipChance%', style: theme.textTheme.bodySmall),
@@ -925,19 +649,13 @@ class _DailyTile extends StatelessWidget {
 }
 
 class _WeatherIcon extends StatelessWidget {
-  const _WeatherIcon({
-    required this.code,
-    this.size = 32,
-    this.isNight = false,
-  });
+  const _WeatherIcon({required this.asset, this.size = 32});
 
-  final int code;
+  final String asset;
   final double size;
-  final bool isNight;
 
   @override
   Widget build(BuildContext context) {
-    final asset = _iconAssetForCode(code, isNight: isNight);
     return Image.asset(asset, width: size, height: size, fit: BoxFit.contain);
   }
 }
