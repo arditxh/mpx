@@ -415,7 +415,13 @@ class WeatherViewModel extends ChangeNotifier {
         _state.selectedIndex >= updated.length && updated.isNotEmpty
         ? updated.length - 1
         : _state.selectedIndex.clamp(0, updated.length);
-    _state = _state.copyWith(cities: updated, selectedIndex: nextIndex);
+    _state = _state.copyWith(
+      cities: updated,
+      selectedIndex: nextIndex,
+      // Clear stale errors if the list is now empty so empty state is clean.
+      error: updated.isEmpty ? null : _state.error,
+      lastLocationFailure: updated.isEmpty ? null : _state.lastLocationFailure,
+    );
     await _persistCities();
     notifyListeners();
   }
