@@ -7,7 +7,6 @@ import 'settings_screen.dart';
 import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
-
 String _iconAssetForCode(int code, {required bool isNight}) {
   // Map Open-Meteo weather codes to local assets.
   if (_isPrecipitation(code)) {
@@ -80,15 +79,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final settings = context.watch<SettingsViewModel>().settings;
     return Scaffold(
       appBar: AppBar(
-        //title: const Text('Weather'), older one 
+        //title: const Text('Weather'), older one
         title: Text(l10n.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
           ),
           Consumer<WeatherViewModel>(
@@ -119,8 +118,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onAdd: _showAddCityDialog,
               onUseLocation: vm.lastLocationFailure != null
                   ? (vm.canRequestLocation
-                      ? vm.requestLocationAccess
-                      : vm.openLocationSettings)
+                        ? vm.requestLocationAccess
+                        : vm.openLocationSettings)
                   : null,
             );
           }
@@ -128,7 +127,13 @@ class _HomeScreenState extends State<HomeScreen> {
           final useCelsius = settings.useCelsius;
           final compactLayout = settings.compactLayout;
           final cardSpacing = compactLayout ? 16.0 : 24.0;
-          final listPadding = EdgeInsets.all(compactLayout ? 12 : 16);
+          final basePadding = compactLayout ? 12.0 : 16.0;
+          final listPadding = EdgeInsets.fromLTRB(
+            basePadding,
+            basePadding,
+            basePadding,
+            basePadding + 40,
+          );
 
           final targetIndex = vm.selectedIndex.clamp(0, vm.cities.length - 1);
           // Only jump pages when the list of cities changes (e.g., add/remove).
@@ -143,8 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Column(
             children: [
-              if (vm.isLoading)
-                const LinearProgressIndicator(minHeight: 3),
+              if (vm.isLoading) const LinearProgressIndicator(minHeight: 3),
               if (vm.error != null)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -210,16 +214,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: compactLayout ? 8 : 12),
                           Builder(
                             builder: (context) {
-                              final textScale = MediaQuery.textScaleFactorOf(context);
+                              final textScale = MediaQuery.textScaleFactorOf(
+                                context,
+                              );
                               final baseHeight = compactLayout ? 135.0 : 155.0;
                               // Grow with larger text to avoid overflow at high scales.
-                              final scaledHeight =
-                                  (baseHeight * textScale).clamp(baseHeight, baseHeight * 1.8);
+                              final scaledHeight = (baseHeight * textScale)
+                                  .clamp(baseHeight, baseHeight * 1.8);
 
-                              final hourlyTimes = cityWeather.bundle.hourly.times;
-                              final hourlyTemps = cityWeather.bundle.hourly.temperatures;
-                              final hourlyCodes = cityWeather.bundle.hourly.codes;
-                              final currentTime = cityWeather.bundle.current.time;
+                              final hourlyTimes =
+                                  cityWeather.bundle.hourly.times;
+                              final hourlyTemps =
+                                  cityWeather.bundle.hourly.temperatures;
+                              final hourlyCodes =
+                                  cityWeather.bundle.hourly.codes;
+                              final currentTime =
+                                  cityWeather.bundle.current.time;
                               int start = 0;
 
                               if (currentTime != null) {
@@ -236,7 +246,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                               int displayCount = hourlyTimes.length - start;
                               if (displayCount > 24) displayCount = 24;
-                              if (displayCount <= 0) displayCount = hourlyTimes.length;
+                              if (displayCount <= 0)
+                                displayCount = hourlyTimes.length;
 
                               return SizedBox(
                                 height: scaledHeight,
@@ -272,8 +283,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     final rawTemp = hourIndex == 0
                                         ? cityWeather.bundle.current.temperature
                                         : hourlyTemps[actualIndex];
-                                    final displayTemp =
-                                        _displayTemp(rawTemp, useCelsius);
+                                    final displayTemp = _displayTemp(
+                                      rawTemp,
+                                      useCelsius,
+                                    );
                                     return _HourlyTile(
                                       label: label,
                                       temperature: displayTemp,
@@ -302,11 +315,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Divider(height: 1),
                             itemBuilder: (context, dayIndex) {
                               return _DailyTile(
-                                label: _isToday(cityWeather.bundle.daily.times[dayIndex])
+                                label:
+                                    _isToday(
+                                      cityWeather.bundle.daily.times[dayIndex],
+                                    )
                                     ? l10n.today
                                     : _formatDay(
                                         context,
-                                        cityWeather.bundle.daily.times[dayIndex],
+                                        cityWeather
+                                            .bundle
+                                            .daily
+                                            .times[dayIndex],
                                       ),
                                 high: _displayTemp(
                                   cityWeather.bundle.daily.tempMax[dayIndex],
@@ -328,10 +347,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ? cityWeather
                                             .bundle
                                             .daily
-                                              .precipitationProbabilityMax[dayIndex]
+                                            .precipitationProbabilityMax[dayIndex]
                                       : 0;
                                   final rounded = _roundToNearestFive(raw);
-                                  final hasPrecip = _isPrecipitation(
+                                  final hasPrecip =
+                                      _isPrecipitation(
                                         cityWeather
                                             .bundle
                                             .daily
@@ -441,28 +461,28 @@ class _HomeScreenState extends State<HomeScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) {
-        final l10n = AppLocalizations.of(context)!; 
+        final l10n = AppLocalizations.of(context)!;
         final animatedListKey = GlobalKey<AnimatedListState>();
 
-      return AlertDialog(
-        title: Text(l10n.addRemoveCity),//Text('Add / Remove City'),
-        content: StatefulBuilder(
-          builder: (context, setStateSB) {
-            if (shouldShowSwipeHint && !hintHideScheduled) {
-              hintHideScheduled = true;
-              Future.delayed(const Duration(seconds: 3), () {
-                if (!hintVisible) return;
-                if (!context.mounted) return;
-                setStateSB(() {
-                  hintVisible = false;
+        return AlertDialog(
+          title: Text(l10n.addRemoveCity), //Text('Add / Remove City'),
+          content: StatefulBuilder(
+            builder: (context, setStateSB) {
+              if (shouldShowSwipeHint && !hintHideScheduled) {
+                hintHideScheduled = true;
+                Future.delayed(const Duration(seconds: 3), () {
+                  if (!hintVisible) return;
+                  if (!context.mounted) return;
+                  setStateSB(() {
+                    hintVisible = false;
+                  });
                 });
-              });
-            }
-            return SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              }
+              return SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     TextField(
                       controller: _cityController,
                       decoration: InputDecoration(
@@ -473,14 +493,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        l10n.currentCities,//'Current Cities:',
+                        l10n.currentCities, //'Current Cities:',
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
                     if (hintVisible) ...[
                       const SizedBox(height: 6),
                       Row(
-                        children:  [ // got rid of const
+                        children: [
+                          // got rid of const
                           Icon(Icons.swipe_right, size: 16),
                           SizedBox(width: 16),
                           //Text('Swipe right to delete'),
@@ -586,7 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 if (context.mounted) Navigator.of(context).pop();
               },
-              child: Text(l10n.add),// const Text('Add'),
+              child: Text(l10n.add), // const Text('Add'),
             ),
           ],
         );
@@ -606,29 +627,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
     vm.removeCity(index);
 
-    listKey.currentState?.removeItem(
-      index,
-      (context, animation) {
-        if (!animate) {
-          return const SizedBox.shrink();
-        }
-        final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOut);
-        return FadeTransition(
-          opacity: curved,
-          child: SizeTransition(
-            sizeFactor: curved,
-            axisAlignment: -1,
-            child: ListTile(
-              title: Text(
-                removedCity.city.name,
-                style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-              ),
+    listKey.currentState?.removeItem(index, (context, animation) {
+      if (!animate) {
+        return const SizedBox.shrink();
+      }
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeInOut,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SizeTransition(
+          sizeFactor: curved,
+          axisAlignment: -1,
+          child: ListTile(
+            title: Text(
+              removedCity.city.name,
+              style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
             ),
           ),
-        );
-      },
-      duration: animate ? const Duration(milliseconds: 300) : Duration.zero,
-    );
+        ),
+      );
+    }, duration: animate ? const Duration(milliseconds: 300) : Duration.zero);
 
     setStateSB(() {});
   }
@@ -859,11 +879,16 @@ class _EmptyState extends StatelessWidget {
               ElevatedButton.icon(
                 icon: const Icon(Icons.my_location),
                 onPressed: onUseLocation,
-                label: Text(l10n.useMyLocation), //const Text('Use my location'),
+                label: Text(
+                  l10n.useMyLocation,
+                ), //const Text('Use my location'),
               ),
             ],
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: onAdd, child: Text(l10n.addCity)), //const Text('Add a city')),
+            ElevatedButton(
+              onPressed: onAdd,
+              child: Text(l10n.addCity),
+            ), //const Text('Add a city')),
           ],
         ),
       ),
