@@ -301,9 +301,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Divider(height: 1),
                             itemBuilder: (context, dayIndex) {
                               return _DailyTile(
-                                label: _formatDay(
-                                  cityWeather.bundle.daily.times[dayIndex],
-                                ),
+                                label: _isToday(cityWeather.bundle.daily.times[dayIndex])
+                                    ? l10n.today
+                                    : _formatDay(
+                                        cityWeather.bundle.daily.times[dayIndex],
+                                      ),
                                 high: _displayTemp(
                                   cityWeather.bundle.daily.tempMax[dayIndex],
                                   useCelsius,
@@ -383,6 +385,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatDay(DateTime date) {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days[date.weekday - 1];
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    final local = date.toLocal();
+    return local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day;
   }
 
   bool _isNight(DateTime? time) {

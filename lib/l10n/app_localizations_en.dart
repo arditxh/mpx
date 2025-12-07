@@ -54,6 +54,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addRemoveCity => 'Add / Remove City';
 
   @override
+  String get today => 'Today';
+
+  @override
   String get textSize => 'Text size';
 
   @override

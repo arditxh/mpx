@@ -185,6 +185,12 @@ abstract class AppLocalizations {
   /// **'Add / Remove City'**
   String get addRemoveCity;
 
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
   /// No description provided for @textSize.
   ///
   /// In en, this message translates to:
