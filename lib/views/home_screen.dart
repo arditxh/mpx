@@ -801,13 +801,20 @@ class _DailyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final textScale = MediaQuery.textScaleFactorOf(context);
+    final labelWidth = (60 * textScale).clamp(60.0, 100.0);
     return Padding(
       padding: EdgeInsets.symmetric(vertical: compact ? 6 : 10),
       child: Row(
         children: [
           SizedBox(
-            width: 60,
-            child: Text(label, style: theme.textTheme.bodyMedium),
+            width: labelWidth,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
           ),
           _WeatherIcon(code: code, size: 20, isNight: isNight),
           if (precipChance != null) ...[
