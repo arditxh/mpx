@@ -269,6 +269,12 @@ abstract class AppLocalizations {
   /// **'Now'**
   String get now;
 
+  /// No description provided for @currentLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Location'**
+  String get currentLocation;
+
   /// No description provided for @openSettings.
   ///
   /// In en, this message translates to:
@@ -376,6 +382,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{message} Showing {city}. Enable location and refresh.'**
   String locationFallbackMessage(Object city, Object message);
+
+  /// No description provided for @weatherClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get weatherClear;
+
+  /// No description provided for @weatherMainlyClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Mainly clear'**
+  String get weatherMainlyClear;
+
+  /// No description provided for @weatherPartlyCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly cloudy'**
+  String get weatherPartlyCloudy;
+
+  /// No description provided for @weatherOvercast.
+  ///
+  /// In en, this message translates to:
+  /// **'Overcast'**
+  String get weatherOvercast;
+
+  /// No description provided for @weatherFog.
+  ///
+  /// In en, this message translates to:
+  /// **'Fog'**
+  String get weatherFog;
+
+  /// No description provided for @weatherRimeFog.
+  ///
+  /// In en, this message translates to:
+  /// **'Depositing rime fog'**
+  String get weatherRimeFog;
+
+  /// No description provided for @weatherLightDrizzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Light drizzle'**
+  String get weatherLightDrizzle;
+
+  /// No description provided for @weatherModerateDrizzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate drizzle'**
+  String get weatherModerateDrizzle;
+
+  /// No description provided for @weatherDenseDrizzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dense drizzle'**
+  String get weatherDenseDrizzle;
+
+  /// No description provided for @weatherLightFreezingDrizzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Light freezing drizzle'**
+  String get weatherLightFreezingDrizzle;
+
+  /// No description provided for @weatherFreezingDrizzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Freezing drizzle'**
+  String get weatherFreezingDrizzle;
+
+  /// No description provided for @weatherSlightRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight rain'**
+  String get weatherSlightRain;
+
+  /// No description provided for @weatherModerateRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate rain'**
+  String get weatherModerateRain;
+
+  /// No description provided for @weatherHeavyRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy rain'**
+  String get weatherHeavyRain;
+
+  /// No description provided for @weatherLightFreezingRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Light freezing rain'**
+  String get weatherLightFreezingRain;
+
+  /// No description provided for @weatherFreezingRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Freezing rain'**
+  String get weatherFreezingRain;
+
+  /// No description provided for @weatherSlightSnowFall.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight snow fall'**
+  String get weatherSlightSnowFall;
+
+  /// No description provided for @weatherModerateSnowFall.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate snow fall'**
+  String get weatherModerateSnowFall;
+
+  /// No description provided for @weatherHeavySnowFall.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy snow fall'**
+  String get weatherHeavySnowFall;
+
+  /// No description provided for @weatherSnowGrains.
+  ///
+  /// In en, this message translates to:
+  /// **'Snow grains'**
+  String get weatherSnowGrains;
+
+  /// No description provided for @weatherSlightRainShowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight rain showers'**
+  String get weatherSlightRainShowers;
+
+  /// No description provided for @weatherModerateRainShowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate rain showers'**
+  String get weatherModerateRainShowers;
+
+  /// No description provided for @weatherViolentRainShowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Violent rain showers'**
+  String get weatherViolentRainShowers;
+
+  /// No description provided for @weatherSlightSnowShowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight snow showers'**
+  String get weatherSlightSnowShowers;
+
+  /// No description provided for @weatherHeavySnowShowers.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy snow showers'**
+  String get weatherHeavySnowShowers;
+
+  /// No description provided for @weatherThunderstorm.
+  ///
+  /// In en, this message translates to:
+  /// **'Thunderstorm'**
+  String get weatherThunderstorm;
+
+  /// No description provided for @weatherThunderstormWithHail.
+  ///
+  /// In en, this message translates to:
+  /// **'Thunderstorm with hail'**
+  String get weatherThunderstormWithHail;
+
+  /// No description provided for @weatherHeavyThunderstormWithHail.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy thunderstorm with hail'**
+  String get weatherHeavyThunderstormWithHail;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

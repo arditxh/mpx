@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/weather.dart';
+import '../models/city.dart';
 import '../viewmodels/settings_viewmodel.dart';
 import '../viewmodels/weather_viewmodel.dart';
 import 'settings_screen.dart';
@@ -54,6 +55,71 @@ int _roundToNearestFive(int value) => (value / 5).round() * 5;
 double _displayTemp(double tempF, bool useCelsius) =>
     useCelsius ? (tempF - 32) * 5 / 9 : tempF;
 String _unitLabel(bool useCelsius) => useCelsius ? '°C' : '°F';
+String _localizedCityName(City city, AppLocalizations l10n) =>
+    city.name == 'Current Location' ? l10n.currentLocation : city.name;
+
+String _localizedConditionLabel(int code, AppLocalizations l10n) {
+  switch (code) {
+    case 0:
+      return l10n.weatherClear;
+    case 1:
+      return l10n.weatherMainlyClear;
+    case 2:
+      return l10n.weatherPartlyCloudy;
+    case 3:
+      return l10n.weatherOvercast;
+    case 45:
+      return l10n.weatherFog;
+    case 48:
+      return l10n.weatherRimeFog;
+    case 51:
+      return l10n.weatherLightDrizzle;
+    case 53:
+      return l10n.weatherModerateDrizzle;
+    case 55:
+      return l10n.weatherDenseDrizzle;
+    case 56:
+      return l10n.weatherLightFreezingDrizzle;
+    case 57:
+      return l10n.weatherFreezingDrizzle;
+    case 61:
+      return l10n.weatherSlightRain;
+    case 63:
+      return l10n.weatherModerateRain;
+    case 65:
+      return l10n.weatherHeavyRain;
+    case 66:
+      return l10n.weatherLightFreezingRain;
+    case 67:
+      return l10n.weatherFreezingRain;
+    case 71:
+      return l10n.weatherSlightSnowFall;
+    case 73:
+      return l10n.weatherModerateSnowFall;
+    case 75:
+      return l10n.weatherHeavySnowFall;
+    case 77:
+      return l10n.weatherSnowGrains;
+    case 80:
+      return l10n.weatherSlightRainShowers;
+    case 81:
+      return l10n.weatherModerateRainShowers;
+    case 82:
+      return l10n.weatherViolentRainShowers;
+    case 85:
+      return l10n.weatherSlightSnowShowers;
+    case 86:
+      return l10n.weatherHeavySnowShowers;
+    case 95:
+      return l10n.weatherThunderstorm;
+    case 96:
+      return l10n.weatherThunderstormWithHail;
+    case 99:
+      return l10n.weatherHeavyThunderstormWithHail;
+    default:
+      return l10n.weatherPartlyCloudy;
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -206,6 +272,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: vm.cities.length,
                   itemBuilder: (context, index) {
                     final cityWeather = vm.cities[index];
+                    final displayCityName =
+                        _localizedCityName(cityWeather.city, l10n);
+                    final conditionLabel = _localizedConditionLabel(
+                      cityWeather.bundle.current.code,
+                      l10n,
+                    );
                     return RefreshIndicator(
                       onRefresh: () => vm.refreshCity(index),
                       child: ListView(
@@ -213,7 +285,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           _CurrentConditionsCard(
                             weather: cityWeather.bundle.current,
-                            cityName: cityWeather.city.name,
+                            cityName: displayCityName,
+                            conditionLabel: conditionLabel,
                             isNight: _isNight(cityWeather.bundle.current.time),
                             useCelsius: useCelsius,
                           ),
@@ -524,6 +597,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         initialItemCount: vm.cities.length,
                         itemBuilder: (context, index, animation) {
                           final city = vm.cities[index];
+                          final displayName = _localizedCityName(
+                            city.city,
+                            l10n,
+                          );
 
                           final curved = CurvedAnimation(
                             parent: animation,
@@ -578,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                               child: ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                title: Text(city.city.name),
+                                title: Text(displayName),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: () => _removeCityAt(
@@ -664,12 +741,14 @@ class _CurrentConditionsCard extends StatelessWidget {
   const _CurrentConditionsCard({
     required this.weather,
     required this.cityName,
+    required this.conditionLabel,
     required this.isNight,
     required this.useCelsius,
   });
 
   final Weather weather;
   final String cityName;
+  final String conditionLabel;
   final bool isNight;
   final bool useCelsius;
 
@@ -714,7 +793,7 @@ class _CurrentConditionsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(weather.condition, style: theme.textTheme.titleMedium),
+          Text(conditionLabel, style: theme.textTheme.titleMedium),
         ],
       ),
     );

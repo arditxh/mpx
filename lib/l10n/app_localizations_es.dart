@@ -96,6 +96,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get now => 'Ahora';
 
   @override
+  String get currentLocation => 'Ubicación actual';
+
+  @override
   String get openSettings => 'Abrir configuración';
 
   @override
@@ -160,4 +163,88 @@ class AppLocalizationsEs extends AppLocalizations {
   String locationFallbackMessage(Object city, Object message) {
     return '$message Mostrando $city. Habilita la ubicación y actualiza.';
   }
+
+  @override
+  String get weatherClear => 'Despejado';
+
+  @override
+  String get weatherMainlyClear => 'Mayormente despejado';
+
+  @override
+  String get weatherPartlyCloudy => 'Parcialmente nublado';
+
+  @override
+  String get weatherOvercast => 'Nublado';
+
+  @override
+  String get weatherFog => 'Niebla';
+
+  @override
+  String get weatherRimeFog => 'Niebla con escarcha';
+
+  @override
+  String get weatherLightDrizzle => 'Llovizna ligera';
+
+  @override
+  String get weatherModerateDrizzle => 'Llovizna moderada';
+
+  @override
+  String get weatherDenseDrizzle => 'Llovizna intensa';
+
+  @override
+  String get weatherLightFreezingDrizzle => 'Llovizna helada ligera';
+
+  @override
+  String get weatherFreezingDrizzle => 'Llovizna helada';
+
+  @override
+  String get weatherSlightRain => 'Lluvia leve';
+
+  @override
+  String get weatherModerateRain => 'Lluvia moderada';
+
+  @override
+  String get weatherHeavyRain => 'Lluvia intensa';
+
+  @override
+  String get weatherLightFreezingRain => 'Lluvia helada ligera';
+
+  @override
+  String get weatherFreezingRain => 'Lluvia helada';
+
+  @override
+  String get weatherSlightSnowFall => 'Nevada ligera';
+
+  @override
+  String get weatherModerateSnowFall => 'Nevada moderada';
+
+  @override
+  String get weatherHeavySnowFall => 'Nevada intensa';
+
+  @override
+  String get weatherSnowGrains => 'Granos de nieve';
+
+  @override
+  String get weatherSlightRainShowers => 'Chubascos ligeros';
+
+  @override
+  String get weatherModerateRainShowers => 'Chubascos moderados';
+
+  @override
+  String get weatherViolentRainShowers => 'Chubascos fuertes';
+
+  @override
+  String get weatherSlightSnowShowers => 'Chubascos de nieve ligeros';
+
+  @override
+  String get weatherHeavySnowShowers => 'Chubascos de nieve intensos';
+
+  @override
+  String get weatherThunderstorm => 'Tormenta eléctrica';
+
+  @override
+  String get weatherThunderstormWithHail => 'Tormenta eléctrica con granizo';
+
+  @override
+  String get weatherHeavyThunderstormWithHail => 'Tormenta eléctrica fuerte con granizo';
 }

@@ -96,6 +96,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get now => 'Now';
 
   @override
+  String get currentLocation => 'Current Location';
+
+  @override
   String get openSettings => 'Open Settings';
 
   @override
@@ -160,4 +163,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String locationFallbackMessage(Object city, Object message) {
     return '$message Showing $city. Enable location and refresh.';
   }
+
+  @override
+  String get weatherClear => 'Clear';
+
+  @override
+  String get weatherMainlyClear => 'Mainly clear';
+
+  @override
+  String get weatherPartlyCloudy => 'Partly cloudy';
+
+  @override
+  String get weatherOvercast => 'Overcast';
+
+  @override
+  String get weatherFog => 'Fog';
+
+  @override
+  String get weatherRimeFog => 'Depositing rime fog';
+
+  @override
+  String get weatherLightDrizzle => 'Light drizzle';
+
+  @override
+  String get weatherModerateDrizzle => 'Moderate drizzle';
+
+  @override
+  String get weatherDenseDrizzle => 'Dense drizzle';
+
+  @override
+  String get weatherLightFreezingDrizzle => 'Light freezing drizzle';
+
+  @override
+  String get weatherFreezingDrizzle => 'Freezing drizzle';
+
+  @override
+  String get weatherSlightRain => 'Slight rain';
+
+  @override
+  String get weatherModerateRain => 'Moderate rain';
+
+  @override
+  String get weatherHeavyRain => 'Heavy rain';
+
+  @override
+  String get weatherLightFreezingRain => 'Light freezing rain';
+
+  @override
+  String get weatherFreezingRain => 'Freezing rain';
+
+  @override
+  String get weatherSlightSnowFall => 'Slight snow fall';
+
+  @override
+  String get weatherModerateSnowFall => 'Moderate snow fall';
+
+  @override
+  String get weatherHeavySnowFall => 'Heavy snow fall';
+
+  @override
+  String get weatherSnowGrains => 'Snow grains';
+
+  @override
+  String get weatherSlightRainShowers => 'Slight rain showers';
+
+  @override
+  String get weatherModerateRainShowers => 'Moderate rain showers';
+
+  @override
+  String get weatherViolentRainShowers => 'Violent rain showers';
+
+  @override
+  String get weatherSlightSnowShowers => 'Slight snow showers';
+
+  @override
+  String get weatherHeavySnowShowers => 'Heavy snow showers';
+
+  @override
+  String get weatherThunderstorm => 'Thunderstorm';
+
+  @override
+  String get weatherThunderstormWithHail => 'Thunderstorm with hail';
+
+  @override
+  String get weatherHeavyThunderstormWithHail => 'Heavy thunderstorm with hail';
 }
