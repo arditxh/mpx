@@ -4,6 +4,8 @@ import '../models/weather.dart';
 import '../viewmodels/settings_viewmodel.dart';
 import '../viewmodels/weather_viewmodel.dart';
 import 'settings_screen.dart';
+import '../l10n/app_localizations.dart';
+
 
 String _iconAssetForCode(int code, {required bool isNight}) {
   // Map Open-Meteo weather codes to local assets.
@@ -73,10 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // ignore: unused_local_variable
     final settings = context.watch<SettingsViewModel>().settings;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weather'),
+        //title: const Text('Weather'), older one 
+        title: Text(l10n.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -198,12 +202,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           SizedBox(height: cardSpacing),
                           Text(
-                            'Hourly',
+                            //'Hourly', older one
+                            l10n.hourly,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           SizedBox(height: compactLayout ? 8 : 12),
                           SizedBox(
-                            height: compactLayout ? 130 : 150,
+                            height: compactLayout ? 135 : 155, //130 : 155 older one
                             child: Builder(
                               builder: (context) {
                                 final hourlyTimes =
@@ -282,7 +287,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           SizedBox(height: cardSpacing),
                           Text(
-                            'Daily',
+                            //'Daily', older one
+                            l10n.dailyForecast,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           SizedBox(height: compactLayout ? 8 : 12),
@@ -421,10 +427,11 @@ class _HomeScreenState extends State<HomeScreen> {
     await showDialog<void>(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!; 
         final animatedListKey = GlobalKey<AnimatedListState>();
 
       return AlertDialog(
-        title: const Text('Add / Remove City'),
+        title: Text(l10n.addRemoveCity),//Text('Add / Remove City'),
         content: StatefulBuilder(
           builder: (context, setStateSB) {
             if (shouldShowSwipeHint && !hintHideScheduled) {
@@ -444,25 +451,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                     TextField(
                       controller: _cityController,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter city name',
+                      decoration: InputDecoration(
+                        hintText: l10n.enterCityName, //'Enter city name',
                       ),
                     ),
                     const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Current Cities:',
+                        l10n.currentCities,//'Current Cities:',
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
                     if (hintVisible) ...[
                       const SizedBox(height: 6),
                       Row(
-                        children: const [
+                        children:  [ // got rid of const
                           Icon(Icons.swipe_right, size: 16),
                           SizedBox(width: 16),
-                          Text('Swipe right to delete'),
+                          //Text('Swipe right to delete'),
+                          Text(l10n.swipeToDelete),
                         ],
                       ),
                     ],
@@ -507,7 +515,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Delete',
+                                      //'Delete',
+                                      l10n.delete,
                                       style: TextStyle(
                                         color: Theme.of(
                                           context,
@@ -553,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel), //const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -563,7 +572,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 if (context.mounted) Navigator.of(context).pop();
               },
-              child: const Text('Add'),
+              child: Text(l10n.add),// const Text('Add'),
             ),
           ],
         );
@@ -804,13 +813,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('No cities yet'),
+            //const Text('No cities yet'), older one
+            Text(l10n.noData),
             if (error != null) ...[
               const SizedBox(height: 8),
               Text(error!, style: const TextStyle(color: Colors.red)),
@@ -820,11 +831,11 @@ class _EmptyState extends StatelessWidget {
               ElevatedButton.icon(
                 icon: const Icon(Icons.my_location),
                 onPressed: onUseLocation,
-                label: const Text('Use my location'),
+                label: Text(l10n.useMyLocation), //const Text('Use my location'),
               ),
             ],
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: onAdd, child: const Text('Add a city')),
+            ElevatedButton(onPressed: onAdd, child: Text(l10n.addCity)), //const Text('Add a city')),
           ],
         ),
       ),

@@ -1,0 +1,29 @@
+{
+  "appTitle": "Aplicación del Clima",
+  "settings": "Configuración",
+  "language": "Idioma",
+  "useMetric": "Usar unidades métricas",
+  "loading": "Cargando...",
+  "error": "Algo salió mal",
+  "noData": "No hay datos disponibles",
+  "currentWeather": "Clima actual",
+  "dailyForecast": "Pronóstico diario",
+  "hourly": "Por hora",
+  "addCity": "Agregar ciudad",
+  "useMyLocation": "Usar mi ubicación",
+  "cancel": "Cancelar",
+  "add": "Agregar",
+  "addRemoveCity": "Agregar / Eliminar ciudad",
+
+  "darkMode": "Modo oscuro",
+  "darkModeSubtitle": "Usar un tema oscuro",
+  "useCelsius": "Mostrar temperaturas en Celsius",
+  "useCelsiusSubtitle": "Cambiar entre °F y °C",
+  "compactLayout": "Diseño compacto",
+  "compactLayoutSubtitle": "Reducir el espacio y el tamaño de las tarjetas",
+  "enterCityName": "Ingrese el nombre de la ciudad",
+  "currentCities": "Ciudades actuales",
+  "swipeToDelete": "Desliza a la derecha para eliminar",
+  "delete": "Eliminar"
+
+}

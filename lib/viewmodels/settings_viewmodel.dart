@@ -2,12 +2,20 @@ import 'package:flutter/foundation.dart';
 
 import '../models/settings.dart';
 import '../repositories/settings_repository.dart';
+import 'package:flutter/material.dart';
+
 
 class SettingsViewModel extends ChangeNotifier {
   SettingsViewModel({SettingsRepository? repository})
       : _repository = repository ?? SharedPrefsSettingsRepository();
 
   final SettingsRepository _repository;
+  //Locale get locale => Locale(_settings.languageCode); //older version
+  Locale? get locale {
+  if (_settings.languageCode.isEmpty) return null; 
+  return Locale(_settings.languageCode);          
+}
+
 
   Settings _settings = const Settings();
   bool _loading = false;
@@ -36,6 +44,10 @@ class SettingsViewModel extends ChangeNotifier {
   Future<void> setCompactLayout(bool enabled) => _update(
         _settings.copyWith(compactLayout: enabled),
       );
+
+  Future<void> setLanguage(String languageCode) => _update(
+      _settings.copyWith(languageCode: languageCode),
+    );
 
   Future<void> _update(Settings next) async {
     _settings = next;
