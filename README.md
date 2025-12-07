@@ -57,7 +57,8 @@ Mobile weather dashboard that auto-detects your location, lets you track multipl
   <img src="docs/enlarged-text.png" width="220" alt="Large text accessibility example">
 </p>
 
-Demo video (3-5 min): `docs/demo.mp4`
+Demo video (3-5 min): 
+[Link](https://drive.google.com/file/d/1E6kp6DUQv2bOoo56cWXmj5ZLz874pPL_/view?usp=sharing)
 
 ## Tech + Data
 
