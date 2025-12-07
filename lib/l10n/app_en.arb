@@ -1,0 +1,29 @@
+{
+  "appTitle": "Weather App",
+  "settings": "Settings",
+  "language": "Language",
+  "useMetric": "Use Metric Units",
+  "loading": "Loading...",
+  "error": "Something went wrong",
+  "noData": "No data available",
+  "currentWeather": "Current Weather",
+  "dailyForecast": "Daily Forecast",
+  "hourly": "Hourly",
+  "addCity": "Add a city",
+  "useMyLocation": "Use my location",
+  "cancel": "Cancel",
+  "add": "Add",
+  "addRemoveCity": "Add / Remove City",
+
+  "darkMode": "Dark mode",
+  "darkModeSubtitle": "Use a darker theme",
+  "useCelsius": "Show temperatures in Celsius",
+  "useCelsiusSubtitle": "Toggle between °F and °C",
+  "compactLayout": "Compact layout",
+  "compactLayoutSubtitle": "Reduce padding and card heights",
+  "enterCityName": "Enter city name",
+  "currentCities": "Current Cities",
+  "swipeToDelete": "Swipe right to delete",
+  "delete": "Delete"
+  
+}
