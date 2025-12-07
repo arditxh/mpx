@@ -5,6 +5,7 @@ import '../viewmodels/settings_viewmodel.dart';
 import '../viewmodels/weather_viewmodel.dart';
 import 'settings_screen.dart';
 import '../l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 
 String _iconAssetForCode(int code, {required bool isNight}) {
@@ -304,6 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 label: _isToday(cityWeather.bundle.daily.times[dayIndex])
                                     ? l10n.today
                                     : _formatDay(
+                                        context,
                                         cityWeather.bundle.daily.times[dayIndex],
                                       ),
                                 high: _displayTemp(
@@ -382,9 +384,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$displayHour $suffix';
   }
 
-  String _formatDay(DateTime date) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[date.weekday - 1];
+  String _formatDay(BuildContext context, DateTime date) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final formatter = DateFormat.E(locale);
+    return formatter.format(date.toLocal());
   }
 
   bool _isToday(DateTime date) {
