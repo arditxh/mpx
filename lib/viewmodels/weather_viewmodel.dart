@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../models/city.dart';
 import '../models/weather_failure.dart';
+import '../repositories/city_repository.dart';
 import '../repositories/weather_repository.dart';
 import '../services/geocoding_service.dart';
 import '../services/location_service.dart';
@@ -20,15 +21,17 @@ class WeatherViewModel extends ChangeNotifier {
   final WeatherRepository _repository;
   final GeocodingService _geocoding;
   final LocationService _location;
+  final CityRepository _cityRepository;
 
   WeatherViewModel({
     WeatherRepository? repository,
     GeocodingService? geocoding,
     LocationService? location,
-  })  : _repository = repository ?? HttpWeatherRepository(),
-        _geocoding = geocoding ?? GeocodingService(),
-        _location = location ?? LocationService();
-
+    CityRepository? cityRepository,
+  }) : _repository = repository ?? HttpWeatherRepository(),
+       _geocoding = geocoding ?? GeocodingService(),
+       _location = location ?? LocationService(),
+       _cityRepository = cityRepository ?? SharedPrefsCityRepository();
 
   final List<CityWeather> _cities = [];
   bool _loading = false;
@@ -40,8 +43,9 @@ class WeatherViewModel extends ChangeNotifier {
   bool get isLoading => _loading;
   String? get error => _error;
   int get selectedIndex => _selectedIndex;
-  CityWeather? get selected =>
-      _cities.isEmpty ? null : _cities[_selectedIndex.clamp(0, _cities.length - 1)];
+  CityWeather? get selected => _cities.isEmpty
+      ? null
+      : _cities[_selectedIndex.clamp(0, _cities.length - 1)];
   LocationFailureReason? get lastLocationFailure => _lastLocationFailure;
   bool get canRequestLocation =>
       _lastLocationFailure != LocationFailureReason.permissionPermanentlyDenied;
@@ -49,8 +53,39 @@ class WeatherViewModel extends ChangeNotifier {
   Future<void> bootstrap() async {
     if (_loading) return;
     _setLoading(true);
+    await _loadSavedCities();
     await ensureCurrentLocationCity(promptPermission: true);
     _setLoading(false);
+  }
+
+  Future<void> _loadSavedCities() async {
+    try {
+      final saved = await _cityRepository.load();
+      if (saved.isEmpty) return;
+
+      var restoreFailed = false;
+      for (final city in saved) {
+        final result = await _repository.getWeatherBundle(
+          latitude: city.latitude,
+          longitude: city.longitude,
+        );
+        if (result.isSuccess && result.value != null) {
+          _cities.add(CityWeather(city: city, bundle: result.value!));
+        } else {
+          restoreFailed = true;
+        }
+      }
+
+      if (_cities.isNotEmpty) {
+        _selectedIndex = 0;
+      }
+      if (restoreFailed) {
+        _error = 'Some saved cities could not be restored. Pull to refresh.';
+      }
+    } catch (_) {
+      _error ??= 'Failed to load saved cities.';
+    }
+    notifyListeners();
   }
 
   Future<void> addCityByName(String name) async {
@@ -112,6 +147,7 @@ class WeatherViewModel extends ChangeNotifier {
         _cities[index] = CityWeather(city: targetCity, bundle: bundle);
         _error = null;
         _lastLocationFailure = null;
+        await _persistCities();
       } else {
         _error = _weatherErrorMessage(targetCity.name, result.failure);
       }
@@ -128,7 +164,9 @@ class WeatherViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> ensureCurrentLocationCity({bool promptPermission = false}) async {
+  Future<void> ensureCurrentLocationCity({
+    bool promptPermission = false,
+  }) async {
     if (promptPermission) {
       await _promptForPermission();
     }
@@ -141,8 +179,9 @@ class WeatherViewModel extends ChangeNotifier {
         latitude: locationResult.position!.latitude,
         longitude: locationResult.position!.longitude,
       );
-      final existingIndex =
-          _cities.indexWhere((c) => c.city.name == 'Current Location');
+      final existingIndex = _cities.indexWhere(
+        (c) => c.city.name == 'Current Location',
+      );
       if (existingIndex >= 0) {
         await refreshCity(existingIndex);
       } else {
@@ -178,7 +217,9 @@ class WeatherViewModel extends ChangeNotifier {
   }
 
   Future<void> _addCity(City city) async {
-    if (_cities.any((c) => c.city.name.toLowerCase() == city.name.toLowerCase())) {
+    if (_cities.any(
+      (c) => c.city.name.toLowerCase() == city.name.toLowerCase(),
+    )) {
       _error = 'City already added';
       return;
     }
@@ -195,6 +236,7 @@ class WeatherViewModel extends ChangeNotifier {
     _cities.add(CityWeather(city: city, bundle: result.value!));
     _error = null;
     _selectedIndex = _cities.length - 1;
+    await _persistCities();
     notifyListeners();
   }
 
@@ -202,9 +244,18 @@ class WeatherViewModel extends ChangeNotifier {
     if (index < 0 || index >= _cities.length) return;
     _cities.removeAt(index);
     if (_selectedIndex >= _cities.length) {
-      _selectedIndex = _cities.length - 1;
+      _selectedIndex = _cities.isEmpty ? 0 : _cities.length - 1;
     }
+    await _persistCities();
     notifyListeners();
+  }
+
+  Future<void> _persistCities() async {
+    try {
+      await _cityRepository.save(_cities.map((c) => c.city).toList());
+    } catch (_) {
+      // Ignore persistence failures to keep UI responsive.
+    }
   }
 
   void _setLoading(bool value, {bool silent = false}) {
@@ -247,7 +298,8 @@ class WeatherViewModel extends ChangeNotifier {
 
   Future<void> _promptForPermission({bool force = false}) async {
     var status = await _location.checkPermission();
-    final needsRequest = force ||
+    final needsRequest =
+        force ||
         status == LocationPermission.denied ||
         status == LocationPermission.unableToDetermine;
     if (needsRequest) {
