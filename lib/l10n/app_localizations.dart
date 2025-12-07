@@ -185,6 +185,18 @@ abstract class AppLocalizations {
   /// **'Add / Remove City'**
   String get addRemoveCity;
 
+  /// No description provided for @textSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get textSize;
+
+  /// No description provided for @textSizeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale all app text to your preferred size'**
+  String get textSizeSubtitle;
+
   /// No description provided for @darkMode.
   ///
   /// In en, this message translates to:

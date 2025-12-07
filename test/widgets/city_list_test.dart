@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpx/l10n/app_localizations.dart';
 import 'package:mpx/views/home_screen.dart';
 import 'package:mpx/viewmodels/settings_viewmodel.dart';
 import 'package:mpx/viewmodels/weather_viewmodel.dart';
@@ -36,7 +37,12 @@ void main() {
           ),
           ChangeNotifierProvider.value(value: vm),
         ],
-        child: const MaterialApp(home: HomeScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: const HomeScreen(),
+        ),
       ),
     );
 

@@ -14,6 +14,8 @@
   "cancel": "Cancel",
   "add": "Add",
   "addRemoveCity": "Add / Remove City",
+  "textSize": "Text size",
+  "textSizeSubtitle": "Scale all app text to your preferred size",
 
   "darkMode": "Dark mode",
   "darkModeSubtitle": "Use a darker theme",

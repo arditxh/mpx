@@ -49,6 +49,13 @@ class SettingsViewModel extends ChangeNotifier {
       _settings.copyWith(languageCode: languageCode),
     );
 
+  Future<void> setTextScale(double scale) {
+    final clamped = scale.clamp(0.8, 1.6);
+    return _update(
+      _settings.copyWith(textScale: clamped.toDouble()),
+    );
+  }
+
   Future<void> _update(Settings next) async {
     _settings = next;
     notifyListeners();

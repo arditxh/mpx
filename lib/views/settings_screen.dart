@@ -20,6 +20,8 @@ class SettingsScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          final textScalePercent = (settings.textScale * 100).round();
+
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
@@ -38,6 +40,45 @@ class SettingsScreen extends StatelessWidget {
                   items: const [
                     DropdownMenuItem(value: 'en', child: Text('English')),
                     DropdownMenuItem(value: 'es', child: Text('Español')),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.textSize,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.textSizeSubtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Slider.adaptive(
+                            value: settings.textScale,
+                            min: 0.8,
+                            max: 1.6,
+                            divisions: 8,
+                            label: '$textScalePercent%',
+                            onChanged: vm.setTextScale,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 56,
+                          child: Text(
+                            '$textScalePercent%',
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

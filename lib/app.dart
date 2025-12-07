@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<SettingsViewModel>(
         builder: (context, settings, _) {
+          final userSettings = settings.settings;
           final lightTheme = ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
             useMaterial3: true,
@@ -36,9 +37,9 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: 'Weather',
             //locale: settings.locale, older version
-            locale: settings.settings.languageCode.isEmpty
+            locale: userSettings.languageCode.isEmpty
                 ? null // use system language first
-                : Locale(settings.settings.languageCode),
+                : Locale(userSettings.languageCode),
             localizationsDelegates: const [
               AppLocalizations.delegate, // Generated localization delegate
               GlobalMaterialLocalizations.delegate,
@@ -50,7 +51,19 @@ class MyApp extends StatelessWidget {
             
             theme: lightTheme,
             darkTheme: darkTheme,
-            themeMode: settings.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: userSettings.darkMode ? ThemeMode.dark : ThemeMode.light,
+            builder: (context, child) {
+              final mediaQuery = MediaQuery.of(context);
+              final combinedTextScale = (mediaQuery.textScaleFactor * userSettings.textScale)
+                  .clamp(0.8, 2.5)
+                  .toDouble();
+              return MediaQuery(
+                data: mediaQuery.copyWith(
+                  textScaleFactor: combinedTextScale,
+                ),
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             home: const HomeScreen(),
           );
         },

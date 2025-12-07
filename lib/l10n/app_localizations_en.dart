@@ -54,6 +54,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addRemoveCity => 'Add / Remove City';
 
   @override
+  String get textSize => 'Text size';
+
+  @override
+  String get textSizeSubtitle => 'Scale all app text to your preferred size';
+
+  @override
   String get darkMode => 'Dark mode';
 
   @override

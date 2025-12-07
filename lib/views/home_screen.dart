@@ -207,38 +207,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           SizedBox(height: compactLayout ? 8 : 12),
-                          SizedBox(
-                            height: compactLayout ? 135 : 155, //130 : 155 older one
-                            child: Builder(
-                              builder: (context) {
-                                final hourlyTimes =
-                                    cityWeather.bundle.hourly.times;
-                                final hourlyTemps =
-                                    cityWeather.bundle.hourly.temperatures;
-                                final hourlyCodes =
-                                    cityWeather.bundle.hourly.codes;
-                                final currentTime =
-                                    cityWeather.bundle.current.time;
-                                int start = 0;
+                          Builder(
+                            builder: (context) {
+                              final textScale = MediaQuery.textScaleFactorOf(context);
+                              final baseHeight = compactLayout ? 135.0 : 155.0;
+                              // Grow with larger text to avoid overflow at high scales.
+                              final scaledHeight =
+                                  (baseHeight * textScale).clamp(baseHeight, baseHeight * 1.8);
 
-                                if (currentTime != null) {
-                                  start = hourlyTimes.indexWhere(
-                                    (t) => t.isAtSameMomentAs(currentTime),
+                              final hourlyTimes = cityWeather.bundle.hourly.times;
+                              final hourlyTemps = cityWeather.bundle.hourly.temperatures;
+                              final hourlyCodes = cityWeather.bundle.hourly.codes;
+                              final currentTime = cityWeather.bundle.current.time;
+                              int start = 0;
+
+                              if (currentTime != null) {
+                                start = hourlyTimes.indexWhere(
+                                  (t) => t.isAtSameMomentAs(currentTime),
+                                );
+                                if (start == -1) {
+                                  start = _closestIndex(
+                                    hourlyTimes,
+                                    currentTime,
                                   );
-                                  if (start == -1) {
-                                    start = _closestIndex(
-                                      hourlyTimes,
-                                      currentTime,
-                                    );
-                                  }
                                 }
+                              }
 
-                                int displayCount = hourlyTimes.length - start;
-                                if (displayCount > 24) displayCount = 24;
-                                if (displayCount <= 0)
-                                  displayCount = hourlyTimes.length;
+                              int displayCount = hourlyTimes.length - start;
+                              if (displayCount > 24) displayCount = 24;
+                              if (displayCount <= 0) displayCount = hourlyTimes.length;
 
-                                return ListView.separated(
+                              return SizedBox(
+                                height: scaledHeight,
+                                child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: displayCount,
                                   separatorBuilder: (_, __) =>
@@ -281,9 +282,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       isNight: _isNight(time),
                                     );
                                   },
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
                           ),
                           SizedBox(height: cardSpacing),
                           Text(
@@ -701,27 +702,41 @@ class _HourlyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final textScale = MediaQuery.textScaleFactorOf(context);
+    final tileWidth = (90 * textScale).clamp(90.0, 120.0).toDouble();
+    final tempText = '${temperature.toStringAsFixed(0)}$unitLabel';
     return Container(
-      width: 90,
-      padding: const EdgeInsets.all(10),
+      width: tileWidth,
+      padding: EdgeInsets.all(textScale >= 1.3 ? 12 : 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(label, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 6),
-          _WeatherIcon(code: code, isNight: isNight),
-          const SizedBox(height: 6),
+          SizedBox(height: textScale >= 1.2 ? 8 : 6),
+          _WeatherIcon(
+            code: code,
+            isNight: isNight,
+            size: textScale >= 1.3 ? 26 : 32,
+          ),
+          SizedBox(height: textScale >= 1.2 ? 8 : 6),
           if (precipChance != null) ...[
             Text('$precipChance%', style: theme.textTheme.bodySmall),
-            const SizedBox(height: 4),
+            SizedBox(height: textScale >= 1.2 ? 6 : 4),
           ],
-          Text(
-            '${temperature.toStringAsFixed(0)}$unitLabel',
-            style: theme.textTheme.titleLarge,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              tempText,
+              softWrap: false,
+              style: theme.textTheme.titleLarge?.copyWith(
+                height: textScale > 1.3 ? 1.05 : null,
+              ),
+            ),
           ),
         ],
       ),
