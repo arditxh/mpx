@@ -738,6 +738,7 @@ class _HourlyTile extends StatelessWidget {
     final textScale = MediaQuery.textScaleFactorOf(context);
     final tileWidth = (90 * textScale).clamp(90.0, 120.0).toDouble();
     final tempText = '${temperature.toStringAsFixed(0)}$unitLabel';
+    final iconSize = (32 * textScale).clamp(28.0, 44.0);
     return Container(
       width: tileWidth,
       padding: EdgeInsets.all(textScale >= 1.3 ? 12 : 10),
@@ -754,7 +755,7 @@ class _HourlyTile extends StatelessWidget {
           _WeatherIcon(
             code: code,
             isNight: isNight,
-            size: textScale >= 1.3 ? 26 : 32,
+            size: iconSize,
           ),
           SizedBox(height: textScale >= 1.2 ? 8 : 6),
           if (precipChance != null) ...[
@@ -803,6 +804,7 @@ class _DailyTile extends StatelessWidget {
     final theme = Theme.of(context);
     final textScale = MediaQuery.textScaleFactorOf(context);
     final labelWidth = (60 * textScale).clamp(60.0, 100.0);
+    final iconSize = (20 * textScale).clamp(20.0, 28.0);
     return Padding(
       padding: EdgeInsets.symmetric(vertical: compact ? 6 : 10),
       child: Row(
@@ -816,7 +818,7 @@ class _DailyTile extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
           ),
-          _WeatherIcon(code: code, size: 20, isNight: isNight),
+          _WeatherIcon(code: code, size: iconSize, isNight: isNight),
           if (precipChance != null) ...[
             const SizedBox(width: 6),
             Text('$precipChance%', style: theme.textTheme.bodySmall),
