@@ -15,6 +15,7 @@ void main() {
     // Inject fake service through constructor
     final vm = WeatherViewModel(
       repository: FakeWeatherRepository(),
+      cityRepository: FakeCityRepository(),
       location: FakeLocationService(
         result: const LocationResult.failure(
           LocationFailureReason.permissionDenied,
@@ -31,9 +32,8 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(
-            create: (_) => SettingsViewModel(
-              repository: FakeSettingsRepository(),
-            ),
+            create: (_) =>
+                SettingsViewModel(repository: FakeSettingsRepository()),
           ),
           ChangeNotifierProvider.value(value: vm),
         ],

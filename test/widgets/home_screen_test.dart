@@ -15,13 +15,13 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(
-            create: (_) => SettingsViewModel(
-              repository: FakeSettingsRepository(),
-            ),
+            create: (_) =>
+                SettingsViewModel(repository: FakeSettingsRepository()),
           ),
           ChangeNotifierProvider(
             create: (_) => WeatherViewModel(
               repository: FakeWeatherRepository(),
+              cityRepository: FakeCityRepository(),
               location: FakeLocationService(
                 result: LocationResult.success(buildFakePosition()),
               ),

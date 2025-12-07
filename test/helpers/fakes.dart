@@ -5,6 +5,8 @@ import 'package:mpx/models/hourlyModel.dart';
 import 'package:mpx/models/settings.dart';
 import 'package:mpx/models/weather.dart';
 import 'package:mpx/models/weather_failure.dart';
+import 'package:mpx/models/city.dart';
+import 'package:mpx/repositories/city_repository.dart';
 import 'package:mpx/repositories/settings_repository.dart';
 import 'package:mpx/repositories/weather_repository.dart';
 import 'package:mpx/services/location_service.dart';
@@ -33,17 +35,16 @@ class FakeWeatherRepository implements WeatherRepository {
   Future<WeatherResult<WeatherBundle>> getWeatherBundle({
     required double latitude,
     required double longitude,
-  }) async =>
-      WeatherResult.success(fakeWeatherBundle);
+  }) async => WeatherResult.success(fakeWeatherBundle);
 }
 
 class FakeLocationService extends LocationService {
   FakeLocationService({
     LocationResult? result,
     this.permissionStatus = LocationPermission.whileInUse,
-  })
-      : _result = result ??
-            const LocationResult.failure(LocationFailureReason.unavailable);
+  }) : _result =
+           result ??
+           const LocationResult.failure(LocationFailureReason.unavailable);
 
   final LocationResult _result;
   final LocationPermission permissionStatus;
@@ -66,7 +67,7 @@ class FakeLocationService extends LocationService {
 
 class FakeSettingsRepository implements SettingsRepository {
   FakeSettingsRepository({Settings initial = const Settings()})
-      : _settings = initial;
+    : _settings = initial;
 
   Settings _settings;
 
@@ -79,10 +80,21 @@ class FakeSettingsRepository implements SettingsRepository {
   }
 }
 
-Position buildFakePosition({
-  double latitude = 10,
-  double longitude = 20,
-}) {
+class FakeCityRepository implements CityRepository {
+  FakeCityRepository({List<City>? initial}) : _cities = List.of(initial ?? []);
+
+  List<City> _cities;
+
+  @override
+  Future<List<City>> load() async => List.of(_cities);
+
+  @override
+  Future<void> save(List<City> cities) async {
+    _cities = List.of(cities);
+  }
+}
+
+Position buildFakePosition({double latitude = 10, double longitude = 20}) {
   return Position(
     latitude: latitude,
     longitude: longitude,
