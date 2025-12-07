@@ -9,6 +9,13 @@ import 'package:intl/intl.dart';
 
 String _iconAssetForCode(int code, {required bool isNight}) {
   // Map Open-Meteo weather codes to local assets.
+  if (_isThunderstorm(code)) {
+    const hailCodes = {96, 99};
+    return hailCodes.contains(code)
+        ? 'icons/thunderstorm-with-hail.png'
+        : 'icons/thunderstorm.png';
+  }
+
   if (_isPrecipitation(code)) {
     // Snow codes
     const snowCodes = {71, 73, 75, 77, 85, 86};
@@ -29,6 +36,8 @@ String _iconAssetForCode(int code, {required bool isNight}) {
       return isNight ? 'icons/cloudy-night.png' : 'icons/partly-cloudy.png';
   }
 }
+
+bool _isThunderstorm(int code) => {95, 96, 99}.contains(code);
 
 bool _isPrecipitation(int code) {
   const precipCodes = {
