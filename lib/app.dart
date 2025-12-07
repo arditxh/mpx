@@ -36,6 +36,7 @@ class MyApp extends StatelessWidget {
 
           return MaterialApp(
             title: 'Weather',
+            debugShowCheckedModeBanner: false,
             //locale: settings.locale, older version
             locale: userSettings.languageCode.isEmpty
                 ? null // use system language first
